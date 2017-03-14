@@ -39,4 +39,3 @@ class Plotter():
 if __name__ == "__main__":
     c = Plotter()
     c.test()
-    print(type(c.df['Call_Date_Time'][3]))

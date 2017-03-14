@@ -7,6 +7,9 @@ import sys, getopt, pprint
 class Database():
     def __init__(self):
         self.data = "res/KS_Mobile_Calls.csv"
+        #self.df = pd.read_csv(self.data, delimiter=";", parse_dates=[0])
+
+
         self.client = MongoClient()
         self.db = self.client.db
         self.calldb = self.db.callData
@@ -29,7 +32,6 @@ class Database():
             #print(date.minute)
 
         jsonData = json.loads(df.to_json(orient="records"))
-
         collection.insert_many(jsonData)
 
     def addMonth(self, dt):
@@ -63,9 +65,10 @@ class Database():
     def addQuarterlyHour(selfs, lineOfDataframe):
         return 'a'
 
+
+
 if __name__ == "__main__":
     c = Database()
-    c.calldb.remove()
     c.csvToDB("res/KS_Mobile_Calls.csv", c.calldb)
     #c.clearDB(c.ytdb)
     #c.clearDB(c.calldb)
