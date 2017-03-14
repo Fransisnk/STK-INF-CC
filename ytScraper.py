@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup as bs
-from urllib.request import urlretrieve, urlopen
+import urllib
+import pandas as pd
 
 class YTScraper():
 
@@ -31,10 +32,30 @@ class YTScraper():
         raw = self.souplocal.find_all("a", {"class": "style-scope ytd-grid-video-renderer"})
         return ["http://www.youtube.com{0}".format(x["href"]) for x in raw]
 
+    def getMetadata(self, videos):
+        """
+        Gets a list of links to youtube videos
+        :return: list of metadata for videos listed
+        """
+        out = []
+        for link in videos:
+            metadata = []
+            page = urllib.urlopen(link).read()
+            soup = bs(page, 'html.parser')
+            videoId = soup.find(itemprop="videoId").get("content")
+            dates = soup.find(itemprop="datePublished").get("content")
+            title = soup.find(itemprop="name").get("content")
+            description = soup.find(itemprop="description").get("content")
+            duration = soup.find(itemprop="duration").get("content")
+            metadata.append([videoId, dates, duration, title, description])
+            out.append(metadata)
+        return(out)
+
 
 
 if __name__ == "__main__":
     c = YTScraper("TelenorNorway")
     #rawdata = c.getRawVideoData()
     #c.rawVideosToDict(rawdata)
-    c.getLinksFromLocal()
+    v = c.getLinksFromLocal()
+    youtube = pd.dataframe(c.getMetadata(v))
