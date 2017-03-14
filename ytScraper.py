@@ -8,7 +8,7 @@ class YTScraper():
         self.soup = ""
         # self.url = urlopen(self.url).read()
         # self.soup = bs(self.url, "html.parser")
-        with open("res/telenoryt.html", "r") as html:
+        with open("publicRes/telenoryt.html", "r") as html:
             self.souplocal = bs(html, "html.parser")
 
         # self.page = bs(dow)
