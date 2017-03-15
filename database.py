@@ -26,10 +26,11 @@ class Database():
         :return:
         """
         df = pd.read_csv(csvPath, delimiter=";", parse_dates=[['Call_Date', 'Time']], nrows=200)
+        dates = []
         for date in df['Call_Date_Time']:
-            print(date)
-            df = df.assign(month=self.addMonth(date))
+            dates.append(self.addMonth(date))
             #print(date.minute)
+        df = df.assign(month=dates)
 
         jsonData = json.loads(df.to_json(orient="records"))
         collection.insert_many(jsonData)
@@ -41,10 +42,8 @@ class Database():
         :param dt:datetime
         :return months:list
         """
-        print(dt.month - 1)
         months = [0] * 12
         months[dt.month -1] = 1
-        print('months-list:',months)
         return(months)
 
     def addQuarterlyHour(self, datetime):
@@ -69,6 +68,10 @@ class Database():
 
 if __name__ == "__main__":
     c = Database()
+    c.calldb.remove()
     c.csvToDB("res/KS_Mobile_Calls.csv", c.calldb)
+    cursor = c.calldb.find({'month' : 1})
+    for line in cursor:
+        print(line['month'])
     #c.clearDB(c.ytdb)
     #c.clearDB(c.calldb)

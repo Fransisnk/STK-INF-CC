@@ -1,4 +1,7 @@
 *.csv
 *.md
 *.xlsx
+*.xsl
+*.xls
+/.idea
 /res
