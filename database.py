@@ -20,19 +20,22 @@ class Database():
 
     def csvToDB(self, csvPath, collection):
         """
-        Adds data from csv-file to mongodb. Param could be pandas-df. Index by date?
+        Adds data from csv-file to mongodb. Param could be pandas-df.
+        Makes the index multiindex: Call_Date, Time and Type. Drops program.
         :param csvPath: str path to csv-file
         :param db: pymongo collection to add data
         :return:
         """
-        df = pd.read_csv(csvPath, delimiter=";", parse_dates=[['Call_Date', 'Time']], nrows=200)
-        dates = []
-        for date in df['Call_Date_Time']:
-            dates.append(self.addMonth(date))
-            #print(date.minute)
-        df = df.assign(month=dates)
+        df = pd.read_csv(csvPath, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date', "Time"], nrows=10)
+        df.drop('Program', axis=1, inplace=True)
 
-        jsonData = json.loads(df.to_json(orient="records"))
+        #dates = []
+        #for date in df['Call_Date_Time']:
+        #    dates.append(self.addMonth(date))
+            #print(date.minute)
+        #df = df.assign(month=dates)
+
+        jsonData = json.loads(df.reset_index().to_json(orient="records"))
         collection.insert_many(jsonData)
 
     def addMonth(self, dt):
@@ -70,8 +73,8 @@ if __name__ == "__main__":
     c = Database()
     c.calldb.remove()
     c.csvToDB("res/KS_Mobile_Calls.csv", c.calldb)
-    cursor = c.calldb.find({'month' : 1})
-    for line in cursor:
-        print(line['month'])
+    #cursor = c.calldb.find({'month' : 1})
+    #for line in cursor:
+    #    print(line['month'])
     #c.clearDB(c.ytdb)
-    #c.clearDB(c.calldb)
+    c.clearDB(c.calldb)

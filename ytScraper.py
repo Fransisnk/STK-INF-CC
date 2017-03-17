@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup as bs
-import urllib
+from urllib.request import urlretrieve, urlopen
 import pandas as pd
 
 class YTScraper():
@@ -34,20 +34,23 @@ class YTScraper():
 
     def getMetadata(self, videos):
         """
-        Gets a list of links to youtube videos
-        :return: list of metadata for videos listed
+        Takes a list of links to youtube videos and returns a list with dict containing metadata for the videos
+        :return: list with metadata for videos listed
         """
         out = []
         for link in videos:
-            metadata = []
-            page = urllib.urlopen(link).read()
+            metadata = {}
+
+            page = urlopen(link).read()
             soup = bs(page, 'html.parser')
-            videoId = soup.find(itemprop="videoId").get("content")
-            dates = soup.find(itemprop="datePublished").get("content")
-            title = soup.find(itemprop="name").get("content")
-            description = soup.find(itemprop="description").get("content")
-            duration = soup.find(itemprop="duration").get("content")
-            metadata.append([videoId, dates, duration, title, description])
+
+            metadata["VidoeID"] = soup.find(itemprop="videoId").get("content")
+            metadata["Date"] = soup.find(itemprop="datePublished").get("content")
+            metadata["Title"] = soup.find(itemprop="name").get("content")
+            metadata["Description"] = soup.find(itemprop="description").get("content")
+            metadata["Duration"] = soup.find(itemprop="duration").get("content")
+
+            print(metadata["Date"])
             out.append(metadata)
         return(out)
 
@@ -58,4 +61,4 @@ if __name__ == "__main__":
     #rawdata = c.getRawVideoData()
     #c.rawVideosToDict(rawdata)
     v = c.getLinksFromLocal()
-    youtube = pd.dataframe(c.getMetadata(v))
+    c.getMetadata(v)
