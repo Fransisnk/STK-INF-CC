@@ -6,10 +6,13 @@ from datetime import datetime
 import sys, getopt, pprint
 
 class Database():
-    def __init__(self):
+    def __init__(self, csvPath, nrows):
         self.data = "res/KS_Mobile_Calls.csv"
         #self.df = pd.read_csv(self.data, delimiter=";", parse_dates=[0])
 
+        self.df = pd.read_csv(csvPath, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
+        self.df.drop('Program', axis=1, inplace=True)
+        self.df.drop('Service', axis=1, inplace=True)
 
         self.client = MongoClient()
         self.db = self.client.db
@@ -19,7 +22,7 @@ class Database():
     def clearDB(self, db):
         db.remove()
 
-    def csvToDB(self, csvPath, collection):
+    def csvToDB(self, collection, df):
         """
         Adds data from csv-file to mongodb. Param could be pandas-df.
         Makes the index multiindex: Call_Date, Time and Type. Drops program.
@@ -27,13 +30,6 @@ class Database():
         :param db: pymongo collection to add data
         :return:
         """
-        df = pd.read_csv(csvPath, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=100)
-        df.drop('Program', axis=1, inplace=True)
-        print(df)
-
-        #print(df['Offered_Calls'].index.get_level_values(2))
-
-
 
         dates = []
         times = []
@@ -43,7 +39,6 @@ class Database():
             times.append(self.addQuarterlyHour(time))
         df = df.assign(month=dates)
         df = df.assign(quarterlyHour=times)
-        print(df)
 
         jsonData = json.loads(df.reset_index().to_json(orient="records"))
         collection.insert_many(jsonData)
@@ -90,17 +85,32 @@ class Database():
         # quarters[numberToAdd] = 1
         # return(quarters)
 
+    def addEmptyhour(self):
+        """
+        Groups the df by Call_date, Time, and Type, and sums the duplicate rows given by the removed subtypes.
+        Creates a new multiindex with all possible combinations, and combines it with the old one adding 0's for the
+        missing places.
+        :return: none
+        """
+        self.df = self.df.groupby(level=[0, 1, 2])["Offered_Calls"].sum()
 
+        levels = ["Call_Date", "Time", "Type"]
+        full_idx = pd.MultiIndex.from_product([self.df.index.levels[0],
+                                               self.df.index.levels[1],
+                                               self.df.index.levels[2]],
+                                              names=levels)
 
+        self.df = self.df.reindex(full_idx.unique()).fillna(0)
 
 
 if __name__ == "__main__":
-    c = Database()
+    c = Database("res/KS_Mobile_Calls.csv", 300)
     c.calldb.remove()
-    c.csvToDB("res/KS_Mobile_Calls.csv", c.calldb)
+    c.csvToDB(c.calldb, c.df)
 
 
     cursor = c.calldb.find({'month' : 1})
 
     #c.clearDB(c.ytdb)
+    c.addEmptyhour()
     c.clearDB(c.calldb)
