@@ -60,6 +60,11 @@ class YTScraper(Database):
         return(out)
 
     def manualLabol(self, db):
+        """
+        DO NOT RUN WITHOUT ASKING ME(FRANSIS)
+        :param db:
+        :return:
+        """
 
         cursor = self.ytdb.find()
         for line in cursor:
@@ -73,13 +78,15 @@ class YTScraper(Database):
 
 if __name__ == "__main__":
     c = YTScraper("TelenorNorway")
-    c.ytdb.remove()
     #rawdata = c.getRawVideoData()
     #c.rawVideosToDict(rawdata)
 
-    v = c.getLinksFromLocal()
-    data = c.getMetadata(v)
-    print(data)
-    c.ytdb.insert_many(data)
+    #v = c.getLinksFromLocal()
+    #data = c.getMetadata(v)
+    #print(data)
+    #c.ytdb.insert_many(data)
 
-    c.manualLabol(c.ytdb)
+    #c.manualLabol(c.ytdb)
+    for l in c.ytdb.find():
+        print(l["Title"])
+        print(l["ad"])
