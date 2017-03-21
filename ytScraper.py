@@ -66,12 +66,12 @@ class YTScraper(Database):
         :return:
         """
 
-        cursor = self.ytdb.find()
+        cursor = self.ytCollection.find()
         for line in cursor:
             print(line["Title"])
             print(line["Description"])
 
-            self.ytdb.update({"_id": line["_id"]}, {"$set": {"ad": input()}})
+            self.ytCollection.update({"_id": line["_id"]}, {"$set": {"ad": input()}})
             print("------------------------------------")
 
 

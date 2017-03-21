@@ -6,21 +6,26 @@ from datetime import datetime
 import sys, getopt, pprint
 
 class Database():
-    def __init__(self, nrows=12500):
-        path = "res/KS_Mobile_Calls.csv"
+    def __init__(self):
+        self.client = MongoClient()
+        self.db = self.client.db
+        self.callCollection = self.db.callData
+        self.ytCollection = self.db.YTData
 
+    def updateCallCollection(self, nrows=12500):
+        '''
+        deletes a collection and re-reads it from csv
+        :param database: database.[databaseName]
+        :param collection: database.[databaseName].[collection]
+        :param nrows: int
+        '''
+        self.callCollection.remove()
+        path = "res/KS_Mobile_Calls.csv"
         self.df = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
         self.df.drop('Program', axis=1, inplace=True)
         self.df.drop('Service', axis=1, inplace=True)
         self.addEmptyhour()
-
-        self.client = MongoClient()
-        self.db = self.client.db
-        self.calldb = self.db.callData
-        self.ytdb = self.db.YTData
-
-    def clearDB(self, db):
-        db.remove()
+        self.csvToDB(self.callCollection, self.df)
 
     def csvToDB(self, collection, df):
         """
@@ -30,7 +35,6 @@ class Database():
         :param db: pymongo collection to add data
         :return:
         """
-
         dates = []
         times = []
         for date in df.index.get_level_values(0):
@@ -105,11 +109,12 @@ class Database():
         self.df = self.df.reindex(full_idx.unique()).fillna(0).to_frame()
         self.df.index.names = levels
 
-if __name__ == "__main__":
-    c = Database(2000)
-    c.calldb.remove()
 
-    c.csvToDB(c.calldb, c.df)
+
+
+if __name__ == "__main__":
+    c = Database() # create database.py object
+    c.updateCallCollection(2000) # read database (with 2000 rows)
+    print('--- Database initiated. Head looks like this:')
     print(c.df.head())
 
-    c.clearDB(c.calldb)
