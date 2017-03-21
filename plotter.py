@@ -2,18 +2,35 @@ import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
+from database import Database
+import numpy
 
-class Plotter():
+plt.style.use('ggplot')
+
+class Plotter(Database):
 
     def __init__(self):
-        self.data = "res/KS_Mobile_Calls.csv"
-        self.df = pd.read_csv(self.data, delimiter=";", index_col=[0, 1], parse_dates=['Call_Date', "Time"])
-        self.df.drop('Program', axis=1, inplace=True)
-        # nrows = 2000 --> only the first 2000 rows are read (for testing purposes it's way quicker than the complete file)
-        # parse_dates: merges the two columns date and time into one
+        Database.__init__(self)
 
-        #self.df.to_csv("res/pd.csv")
+        # DO in Database class
         self.df['Offered_Calls'] = self.df['Offered_Calls'].astype(np.int64)
+
+    def plotAll(self):
+
+        mob_best, mob_trans, mob_faktura, mob_feil, dates = [], [], [], [], []
+        print(self.df.head())
+        for date, new_df in self.df.groupby(level=0):
+            dates.append(date)
+            mob_best.append(new_df.xs("Mobile Bestilling", level=2).sum())
+            mob_trans.append(new_df.xs("Mobile Bestilling Transfer", level=2).sum())
+            mob_faktura.append(new_df.xs("Mobile Faktura", level=2).sum())
+            mob_feil.append(new_df.xs("Mobile Feil og Support", level=2).sum())
+
+        plt.plot(dates, mob_best, color='blue', label="Mobile Bestilling")
+        plt.plot(dates, mob_trans, label="Mobile Bestilling Transfer")
+        plt.plot(dates, mob_faktura, label="Mobile Faktura")
+        plt.plot(dates, mob_feil, label="Mobile Feil og Support")
+        plt.show()
 
     def test(self):
         dates = []
@@ -35,4 +52,4 @@ class Plotter():
 
 if __name__ == "__main__":
     c = Plotter()
-    c.test()
+    c.plotAll()
