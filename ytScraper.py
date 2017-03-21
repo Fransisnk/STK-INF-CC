@@ -1,10 +1,13 @@
 from bs4 import BeautifulSoup as bs
 from urllib.request import urlretrieve, urlopen
 import pandas as pd
+from database import Database
 
-class YTScraper():
+class YTScraper(Database):
 
     def __init__(self, account):
+        Database.__init__(self)
+
         self.url = "http://www.youtube.com/user/{0}/videos".format(account)
         self.soup = ""
         # self.url = urlopen(self.url).read()
@@ -38,6 +41,7 @@ class YTScraper():
         :return: list with metadata for videos listed
         """
         out = []
+
         for link in videos:
             metadata = {}
 
@@ -52,13 +56,30 @@ class YTScraper():
 
             print(metadata["Date"])
             out.append(metadata)
+
         return(out)
+
+    def manualLabol(self, db):
+
+        cursor = self.ytdb.find()
+        for line in cursor:
+            print(line["Title"])
+            print(line["Description"])
+
+            self.ytdb.update({"_id": line["_id"]}, {"$set": {"ad": input()}})
+            print("------------------------------------")
 
 
 
 if __name__ == "__main__":
     c = YTScraper("TelenorNorway")
+    c.ytdb.remove()
     #rawdata = c.getRawVideoData()
     #c.rawVideosToDict(rawdata)
+
     v = c.getLinksFromLocal()
-    c.getMetadata(v)
+    data = c.getMetadata(v)
+    print(data)
+    c.ytdb.insert_many(data)
+
+    c.manualLabol(c.ytdb)
