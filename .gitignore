@@ -3,5 +3,7 @@
 *.xlsx
 *.xsl
 *.xls
+*.xml
 /.idea
 /res
+/__pycache__
