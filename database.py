@@ -6,7 +6,7 @@ from datetime import datetime
 import sys, getopt, pprint
 
 class Database():
-    def __init__(self, nrows=22500):
+    def __init__(self, nrows=12500):
         path = "res/KS_Mobile_Calls.csv"
 
         self.df = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)

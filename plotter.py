@@ -14,6 +14,13 @@ class Plotter(Database):
 
         # DO in Database class
         self.df['Offered_Calls'] = self.df['Offered_Calls'].astype(np.int64)
+        self.ytdf = pd.DataFrame(list(self.ytdb.find()))
+        self.ytdf.drop("Description", axis=1, inplace=True)
+        self.ytdf.drop("Duration", axis=1, inplace=True)
+        self.ytdf.drop("Title", axis=1, inplace=True)
+        self.ytdf.drop("_id", axis=1, inplace=True)
+
+        print(self.ytdf.head())
 
     def plotAll(self):
 
@@ -30,22 +37,6 @@ class Plotter(Database):
         plt.plot(dates, mob_trans, label="Mobile Bestilling Transfer")
         plt.plot(dates, mob_faktura, label="Mobile Faktura")
         plt.plot(dates, mob_feil, label="Mobile Feil og Support")
-        plt.show()
-
-    def test(self):
-        dates = []
-        calls = []
-        for date, new_df in self.df.groupby(level=0):
-            dates.append(date)
-            print(date)
-            calls.append(new_df["Offered_Calls"].sum())
-
-        #dates = self.df['Call_Date_Time']
-        #calls = self.df['Offered_Calls']
-        plt.plot(dates, calls)
-        #plt.gcf().autofmt_xdate()
-        # tilts xaxis-description so it's easier readable
-
         plt.show()
 
 

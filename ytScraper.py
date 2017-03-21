@@ -76,17 +76,6 @@ class YTScraper(Database):
 
 
 
+
 if __name__ == "__main__":
     c = YTScraper("TelenorNorway")
-    #rawdata = c.getRawVideoData()
-    #c.rawVideosToDict(rawdata)
-
-    #v = c.getLinksFromLocal()
-    #data = c.getMetadata(v)
-    #print(data)
-    #c.ytdb.insert_many(data)
-
-    #c.manualLabol(c.ytdb)
-    for l in c.ytdb.find():
-        print(l["Title"])
-        print(l["ad"])
