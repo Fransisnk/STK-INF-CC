@@ -6,13 +6,13 @@ from datetime import datetime
 import sys, getopt, pprint
 
 class Database():
-    def __init__(self, csvPath, nrows):
-        self.data = "res/KS_Mobile_Calls.csv"
-        #self.df = pd.read_csv(self.data, delimiter=";", parse_dates=[0])
+    def __init__(self, nrows=22500):
+        path = "res/KS_Mobile_Calls.csv"
 
-        self.df = pd.read_csv(csvPath, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
+        self.df = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
         self.df.drop('Program', axis=1, inplace=True)
         self.df.drop('Service', axis=1, inplace=True)
+        self.addEmptyhour()
 
         self.client = MongoClient()
         self.db = self.client.db
@@ -92,7 +92,9 @@ class Database():
         missing places.
         :return: none
         """
+
         self.df = self.df.groupby(level=[0, 1, 2])["Offered_Calls"].sum()
+
 
         levels = ["Call_Date", "Time", "Type"]
         full_idx = pd.MultiIndex.from_product([self.df.index.levels[0],
@@ -100,17 +102,14 @@ class Database():
                                                self.df.index.levels[2]],
                                               names=levels)
 
-        self.df = self.df.reindex(full_idx.unique()).fillna(0)
-
+        self.df = self.df.reindex(full_idx.unique()).fillna(0).to_frame()
+        self.df.index.names = levels
 
 if __name__ == "__main__":
-    c = Database("res/KS_Mobile_Calls.csv", 300)
+    c = Database(2000)
     c.calldb.remove()
+
     c.csvToDB(c.calldb, c.df)
+    print(c.df.head())
 
-
-    cursor = c.calldb.find({'month' : 1})
-
-    #c.clearDB(c.ytdb)
-    c.addEmptyhour()
     c.clearDB(c.calldb)
