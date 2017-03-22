@@ -37,12 +37,15 @@ class Database():
         """
         dates = []
         times = []
+        days = []
         for date in df.index.get_level_values(0):
-            dates.append(self.addMonth(date))
+            dates.append(self.addMonth(date)[0])
+            days.append(self.addMonth(date)[1])
         for time in df.index.get_level_values(1):
             times.append(self.addQuarterlyHour(time))
         df = df.assign(month=dates)
         df = df.assign(quarterlyHour=times)
+        df = df.assign(weekday=days)
 
         jsonData = json.loads(df.reset_index().to_json(orient="records"))
         collection.insert_many(jsonData)
@@ -53,9 +56,11 @@ class Database():
         :param dt:datetime
         :return months:list
         """
+        day = [0] * 7
+        day[dt.weekday()] = 1
         months = [0] * 12
         months[dt.month -1] = 1
-        return(months)
+        return(months, day)
 
     def addQuarterlyHour(self, dt):
         '''
