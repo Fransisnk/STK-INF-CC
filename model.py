@@ -9,7 +9,7 @@ class Model(Database):
 
     def returnColumn(self, columnName, limit=0):
         '''
-        returns the columnName of a given [columnName], limited to [limit] lines
+        returns the column of a given [columnName], limited to [limit] lines
         :param columnName: string
         :param limit: int
         :return: list
@@ -19,14 +19,24 @@ class Model(Database):
             resultList.append(line[columnName])
         return(resultList)
 
-    def returnAllColumnNames(self):
+    def returnAllColumnNames(self, collection):
+        '''
+        returns all column keys of a collection
+        :param collection: mongoDB collection
+        :return: string list
+        '''
         keyList = []
-        for key in self.callCollection.find_one().keys():
+        for key in collection.find_one().keys():
             keyList.append(key)
         return(keyList)
 
 
     def returnCombinedColumn(self, colList):
+        '''
+        combines all content of a column of a collection to one long list
+        :param colList: mongoDB collection
+        :return: list
+        '''
         dataFrame = model.callCollection.find()
         resultList = []
         for line in dataFrame:
@@ -42,8 +52,9 @@ if __name__ == "__main__":
     model = Model()
 
     columnList = ['quarterlyHour', 'month']
-
-    print(model.returnCombinedColumn(columnList))
+    print(model.returnAllColumnNames(model.callCollection))
+    #print(model.returnCombinedColumn(columnList))
+    print(model.returnColumn())
 
 
 
