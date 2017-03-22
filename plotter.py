@@ -12,18 +12,19 @@ class Plotter(Database):
     def __init__(self):
         Database.__init__(self)
 
+        self.updateCallCollection()
+
         # DO in Database class
         self.df['Offered_Calls'] = self.df['Offered_Calls'].astype(np.int64)
 
-        self.ytdf = pd.DataFrame(list(self.ytdb.find()))
+
+        self.ytdf = pd.DataFrame(list(self.ytCollection.find()))
         self.ytdf.drop("Description", axis=1, inplace=True)
         self.ytdf.drop("Duration", axis=1, inplace=True)
         self.ytdf.drop("Title", axis=1, inplace=True)
         self.ytdf.drop("_id", axis=1, inplace=True)
         self.ytdf = self.ytdf.set_index("Date")
-        self.ytdf.index.to_datetime()
         self.ytdf['ad'] = self.ytdf['ad'].astype(np.int64)
-        print(self.ytdf.head())
 
 
     def plotAll(self):
@@ -41,7 +42,7 @@ class Plotter(Database):
         for index, row in self.ytdf.iterrows():
             if row["ad"] == 1:
                 ytdates.append(datetime.strptime(index, "%Y-%m-%d"))
-        print(type(ytdates[0]))
+
         for xc in ytdates:
             plt.axvline(x=xc, color='k', linestyle='--')
 
@@ -52,8 +53,18 @@ class Plotter(Database):
         plt.xlim((dates[0], dates[-1]))
         plt.show()
 
+    def plotWeek(self, start_date, end_date):
+        print(self.df["Call_Date"])
+        mask = (self.df['Call_Date'] > start_date) & (self.df['Call_Date'] <= end_date)
+        self.df[mask].plot()
+        plt.show()
+
 
 
 if __name__ == "__main__":
     c = Plotter()
-    c.plotAll()
+    #2013-01-01 - 2013-01-18
+    #c.plotAll()
+    start = datetime.strptime("2013-01-01", "%Y-%m-%d")
+    end = datetime.strptime("2013-01-18", "%Y-%m-%d")
+    c.plotWeek(start, end)
