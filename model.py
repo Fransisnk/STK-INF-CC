@@ -1,5 +1,6 @@
 from database import Database
 from pymongo import MongoClient
+import datetime
 
 
 class Model(Database):
@@ -47,14 +48,43 @@ class Model(Database):
         return(resultList)
 
 
+    def dummyToQuarterlyHour(self, dummy):
+        '''
+        transforms a dummy array consisting of [0, ..., 1, 0] into a datetime object
+        :param dummy: list
+        :return: datetime object
+        '''
+        minute = 0
+        hour = 0
+        if 1 in dummy[:23]:
+            minute = 0
+            hour = dummy[:23].index(1)
+        elif 1 in dummy[24:47]:
+            minute = 15
+            hour = dummy[24:47].index(1)
+        elif 1 in dummy[48:71]:
+            minute = 30
+            hour = dummy[48:71].index(1)
+        elif 1 in dummy[72:95]:
+            minute = 45
+            hour = dummy[72:95].index(1)
+        return(datetime.time(hour, minute))
+
+
+
 
 if __name__ == "__main__":
     model = Model()
 
     columnList = ['quarterlyHour', 'month']
+
+    # testing backtransformation from dummy array to datetime.time object
+    singleTestDummy = model.returnColumn('quarterlyHour')[68]
+    print(model.dummyToQuarterlyHour(singleTestDummy))
+
+    # returns all columns contained in matrix
     print(model.returnAllColumnNames(model.callCollection))
     #print(model.returnCombinedColumn(columnList))
-    print(model.returnColumn())
 
 
 

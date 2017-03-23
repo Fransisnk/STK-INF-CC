@@ -12,7 +12,7 @@ class Database():
         self.callCollection = self.db.callData
         self.ytCollection = self.db.YTData
 
-    def updateCallCollection(self, nrows=12500):
+    def updateCallCollection(self, nrows=None):
         '''
         deletes a collection and re-reads it from csv
         :param database: database.[databaseName]
@@ -119,7 +119,7 @@ class Database():
 
 if __name__ == "__main__":
     c = Database() # create database.py object
-    c.updateCallCollection(2000) # read database (with 2000 rows)
+    c.updateCallCollection(nrows=2000) # read database (with 2000 rows)
     print('--- Database initiated. Head looks like this:')
     print(c.df.head())
 

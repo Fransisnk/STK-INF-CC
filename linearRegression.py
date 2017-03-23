@@ -2,20 +2,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import datasets, linear_model
 import model
+import matplotlib.patches as mpatches
 import datetime
 import matplotlib.dates
 
 
 model = model.Model()
 dataLength = len(model.returnColumn('quarterlyHour'))
-tenPercentOfDataLength = int(dataLength / 10)
+twentyPercentOfData = int(dataLength / 5)
 
-quartHours_train = model.returnColumn('quarterlyHour')[:-tenPercentOfDataLength]
-quartHours_test = model.returnColumn('quarterlyHour')[-tenPercentOfDataLength:]
+quartHours_train = model.returnColumn('quarterlyHour')[:-twentyPercentOfData]
+quartHours_test = model.returnColumn('quarterlyHour')[-twentyPercentOfData:]
 
 
-calls_train = model.returnColumn('Offered_Calls')[:-tenPercentOfDataLength]
-calls_test = model.returnColumn('Offered_Calls')[-tenPercentOfDataLength:]
+calls_train = model.returnColumn('Offered_Calls')[:-twentyPercentOfData]
+calls_test = model.returnColumn('Offered_Calls')[-twentyPercentOfData:]
+
 
 regr = linear_model.LinearRegression()
 regr.fit(quartHours_train, calls_train)
@@ -28,30 +30,19 @@ print("Mean squared error: %.2f"
 # Explained variance score: 1 is perfect prediction
 print('Variance score: %.2f' % regr.score(quartHours_test, calls_test))
 
-# print(model.returnAllColumnNames(model.callCollection))
+
+prediction = regr.predict(quartHours_test)
 
 
-#quartHours_test_regrpredict = regr.predict(quartHours_test)
-#print('quartHours_test_regpredict: \n', quartHours_test_regrpredict)
-
-# Plot outputs
-
-# translates the dummy data [0, 0, 1, 0, ... 0] into the actual time
-for line in quartHours_test:
-    indexOfLine = model.returnColumn('quarterlyHour').index(line)
-    quartHours_test[quartHours_test.index(line)] = datetime.datetime.strptime(model.returnColumn('Time')[indexOfLine], '%H:%M:%S')
-
-#for line in quartHours_test_regrpredict:
-#    indexOfLine = model.returnColumn('quarterlyHour').index(line)
-#    quartHours_test_regrpredict[quartHours_test_regrpredict.index(line)] = datetime.datetime.strptime(model.returnColumn('Time')[indexOfLine], '%H:%M:%S')
+for dummyArray in quartHours_test:
+    quartHours_test[quartHours_test.index(dummyArray)] = model.dummyToQuarterlyHour(dummyArray)
 
 
-#quartHours_test_asDatesToPlot = matplotlib.dates.date2num(quartHours_test)
-print(type(quartHours_test[5]))
-
-plt.scatter(quartHours_test, calls_test,  color='black')
-plt.plot_date(quartHours_test, quartHours_test_regrpredict, color='blue', linewidth=3)
-
+#plt.scatter(quartHours_test, prediction,  color='black')
+predictedCallsPlot = plt.plot(quartHours_test, prediction, 'rs', label='prediction', markevery=10, markersize=3)
+actualCallsPlot = plt.plot(quartHours_test, calls_test, 'bs', label='actual calls', markevery=10, markersize=3)
+first_legend = plt.legend(handles=[predictedCallsPlot], loc=1)
+second_legend = plt.legend(handles=[actualCallsPlot], loc=1)
 #predCalls = regr.predict(calls_test)
 #print(len(predCalls), len(calls_test))
 #plt.plot(calls_test)
