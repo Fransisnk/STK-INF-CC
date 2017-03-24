@@ -8,15 +8,16 @@ import matplotlib.dates
 
 
 model = model.Model()
-dataLength = len(model.returnColumn('quarterlyHour'))
+dataLength = len(model.returnColumn('quarterlyHour', limit=50000))
+print(dataLength)
 twentyPercentOfData = int(dataLength / 5)
 
-quartHours_train = model.returnColumn('quarterlyHour')[:-twentyPercentOfData]
-quartHours_test = model.returnColumn('quarterlyHour')[-twentyPercentOfData:]
+quartHours_train = model.returnColumn('quarterlyHour', limit=50000)[:-twentyPercentOfData]
+quartHours_test = model.returnColumn('quarterlyHour', limit=50000)[-twentyPercentOfData:]
 
 
-calls_train = model.returnColumn('Offered_Calls')[:-twentyPercentOfData]
-calls_test = model.returnColumn('Offered_Calls')[-twentyPercentOfData:]
+calls_train = model.returnColumn('Offered_Calls', limit=50000)[:-twentyPercentOfData]
+calls_test = model.returnColumn('Offered_Calls', limit=50000)[-twentyPercentOfData:]
 
 
 regr = linear_model.LinearRegression()
@@ -39,10 +40,10 @@ for dummyArray in quartHours_test:
 
 
 #plt.scatter(quartHours_test, prediction,  color='black')
-predictedCallsPlot = plt.plot(quartHours_test, prediction, 'rs', label='prediction', markevery=10, markersize=3)
-actualCallsPlot = plt.plot(quartHours_test, calls_test, 'bs', label='actual calls', markevery=10, markersize=3)
-first_legend = plt.legend(handles=[predictedCallsPlot], loc=1)
-second_legend = plt.legend(handles=[actualCallsPlot], loc=1)
+plt.plot(quartHours_test, prediction, 'rs', label='prediction', markevery=100, markersize=3)
+plt.plot(quartHours_test, calls_test, 'bs', label='actual calls', markevery=10, markersize=3)
+plt.legend() # creates a legend
+plt.ylim([0,250]) # limits the axis size
 #predCalls = regr.predict(calls_test)
 #print(len(predCalls), len(calls_test))
 #plt.plot(calls_test)

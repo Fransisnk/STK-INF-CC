@@ -8,15 +8,15 @@ class Model(Database):
         Database.__init__(self)
 
 
-    def returnColumn(self, columnName, limit=0):
+    def returnColumn(self, columnName, limit=None):
         '''
-        returns the column of a given [columnName], limited to [limit] lines
+        returns the column of a given [columnName], limited to [limit] lines (default: no limit)
         :param columnName: string
         :param limit: int
         :return: list
         '''
         resultList = []
-        for line in self.callCollection.find():
+        for line in self.callCollection.find()[:limit]:
             resultList.append(line[columnName])
         return(resultList)
 
@@ -79,8 +79,9 @@ if __name__ == "__main__":
     columnList = ['quarterlyHour', 'month']
 
     # testing backtransformation from dummy array to datetime.time object
-    singleTestDummy = model.returnColumn('quarterlyHour')[68]
-    print(model.dummyToQuarterlyHour(singleTestDummy))
+    singleTestDummy = model.returnColumn('quarterlyHour', limit=1000)
+    for line in singleTestDummy:
+        print(model.dummyToQuarterlyHour(line))
 
     # returns all columns contained in matrix
     print(model.returnAllColumnNames(model.callCollection))
