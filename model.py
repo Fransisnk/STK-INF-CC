@@ -20,6 +20,18 @@ class Model(Database):
             resultList.append(line[columnName])
         return(resultList)
 
+    def returnColumnForType(self, columnName, type):
+        '''
+        returns the column of a given [columnName], for a certain specified type [Bestilling, etc.]
+        :param columnName: string
+        :param type: string
+        :return: list
+        '''
+        resultList = []
+        for line in self.callCollection.find({'Type': type}):
+            resultList.append(line[columnName])
+        return(resultList)
+
     def returnAllColumnNames(self, collection):
         '''
         returns all column keys of a collection
@@ -86,6 +98,9 @@ if __name__ == "__main__":
     # returns all columns contained in matrix
     print(model.returnAllColumnNames(model.callCollection))
     #print(model.returnCombinedColumn(columnList))
+
+    # returns all rows for type "Bestilling"
+    #print(model.returnColumnForType('Offered_Calls', 'Mobile Bestilling'))
 
 
 
