@@ -4,6 +4,9 @@ import json
 import pandas as pd
 from datetime import datetime
 import sys, getopt, pprint
+import matplotlib.pyplot as plt
+
+plt.style.use('ggplot')
 
 class Database():
     def __init__(self):
@@ -11,6 +14,51 @@ class Database():
         self.db = self.client.db
         self.callCollection = self.db.callData
         self.ytCollection = self.db.YTData
+
+    def clusderDf(self):
+        """path = "res/KS_Mobile_Calls.csv"
+        self.cdf = pd.read_csv(path, delimiter=";", parse_dates=[['Call_Date', 'Time']], nrows=200)
+        levels = ["Call_Date", "Time", "Type"]
+
+        full_idx = pd.MultiIndex.from_product([self.df.index.levels[0],
+                                               self.df.index.levels[1],
+                                               self.df.index.levels[2]],
+                                              names=levels)
+
+        self.cdf.drop('Program', axis=1, inplace=True)
+        self.cdf.drop('Service', axis=1, inplace=True)
+        """
+        path = "res/KS_Mobile_Calls.csv"
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=2000)
+        self.cdf.drop('Program', axis=1, inplace=True)
+        self.cdf.drop('Service', axis=1, inplace=True)
+
+        self.cdf = self.cdf.groupby(level=[0, 1, 2])["Offered_Calls"].sum()
+
+        levels = ["Call_Date", "Time", "Type"]
+
+        full_idx = pd.MultiIndex.from_product([self.cdf.index.levels[0],
+                                               self.cdf.index.levels[1],
+                                               self.cdf.index.levels[2]],
+                                              names=levels)
+
+        self.cdf = self.cdf.reindex(full_idx.unique()).fillna(0).to_frame()
+        self.cdf.index.names = levels
+
+        datelist = self.cdf.index.get_level_values(0)
+        hourlist = self.cdf.index.get_level_values(1)
+
+        datelist = (list(map(lambda dfdate, dftime:
+                             datetime.combine(dfdate.date(), datetime.strptime(dftime, "%H:%M:%S").time()),
+                             datelist, hourlist)))
+
+        self.cdf['type'] = self.cdf.index.get_level_values('Type')
+
+        self.cdf.index = pd.DatetimeIndex(datelist)
+        self.cdf.plot(kind='bar')
+        plt.show()
+        print(self.cdf)
+
 
     def updateCallCollection(self, nrows=None):
         '''
@@ -21,7 +69,7 @@ class Database():
         '''
         self.callCollection.remove()
         path = "res/KS_Mobile_Calls.csv"
-        self.df = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
+        self.df = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=200)
         self.df.drop('Program', axis=1, inplace=True)
         self.df.drop('Service', axis=1, inplace=True)
         self.addEmptyhour()
@@ -61,7 +109,6 @@ class Database():
 
         jsonData = json.loads(df.reset_index().to_json(orient="records"))
         collection.insert_many(jsonData)
-
 
     def addMonth(self, dt):
         """
@@ -154,5 +201,5 @@ class Database():
 
 if __name__ == "__main__":
     c = Database() # create database.py object
-    c.updateCallCollection() # read database (with 2000 rows)
-    print('--- Database initiated.')
+    c.clusderDf() # read database (with 2000 rows)
+
