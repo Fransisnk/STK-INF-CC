@@ -8,40 +8,50 @@ import matplotlib.dates
 
 
 model = model.Model()
-dataLength = len(model.returnColumn('quarterlyHour', limit=50000))
-print(dataLength)
+
+#reading data
+timeData = model.reduceColumnToType('Mobile Bestilling', 'combinedDummy')
+callData = model.reduceColumnToType('Mobile Bestilling', 'Offered_Calls')
+
+# splitting up 20% of data
+dataLength = len(timeData)
+print('data size:', dataLength)
 twentyPercentOfData = int(dataLength / 5)
 
-quartHours_train = model.returnColumn('quarterlyHour', limit=50000)[:-twentyPercentOfData]
-quartHours_test = model.returnColumn('quarterlyHour', limit=50000)[-twentyPercentOfData:]
+# defining train and test sets of data
+dateAndTime_train = timeData[:-twentyPercentOfData]
+dateAndTime_test = timeData[-twentyPercentOfData:]
+calls_train = callData[:-twentyPercentOfData]
+calls_test = callData[-twentyPercentOfData:]
 
-
-calls_train = model.returnColumn('Offered_Calls', limit=50000)[:-twentyPercentOfData]
-calls_test = model.returnColumn('Offered_Calls', limit=50000)[-twentyPercentOfData:]
-
-
+#running linreg
 regr = linear_model.LinearRegression()
-regr.fit(quartHours_train, calls_train)
+regr.fit(dateAndTime_train, calls_train)
 
 # The coefficients
 print('Coefficients: \n', regr.coef_)
 # The mean squared error
 print("Mean squared error: %.2f"
-      % np.mean((regr.predict(quartHours_test) - calls_test) ** 2))
+      % np.mean((regr.predict(dateAndTime_test) - calls_test) ** 2))
 # Explained variance score: 1 is perfect prediction
-print('Variance score: %.2f' % regr.score(quartHours_test, calls_test))
+print('Variance score: %.2f' % regr.score(dateAndTime_test, calls_test))
 
 
-prediction = regr.predict(quartHours_test)
+prediction = regr.predict(dateAndTime_test)
+
+for index, dummyArray in enumerate(dateAndTime_test):
+    dateAndTime_test[index] = model.dummyToQuarterlyHour(dummyArray)[0]
 
 
-for dummyArray in quartHours_test:
-    quartHours_test[quartHours_test.index(dummyArray)] = model.dummyToQuarterlyHour(dummyArray)
 
 
-#plt.scatter(quartHours_test, prediction,  color='black')
-plt.plot(quartHours_test, prediction, 'rs', label='prediction', markevery=100, markersize=3)
-plt.plot(quartHours_test, calls_test, 'bs', label='actual calls', markevery=10, markersize=3)
+
+
+    # quartHours_testTime[index] = model.dummyToQuarterlyHour(dummyArray)[0]
+
+
+plt.plot(dateAndTime_test, prediction, 'rs', label='prediction', markevery=100, markersize=5)
+plt.plot(dateAndTime_test, calls_test, 'bs', label='actual calls', markevery=10, markersize=3)
 plt.legend() # creates a legend
 plt.ylim([0,250]) # limits the axis size
 #predCalls = regr.predict(calls_test)

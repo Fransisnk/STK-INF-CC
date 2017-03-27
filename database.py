@@ -4,6 +4,9 @@ import json
 import pandas as pd
 from datetime import datetime
 import sys, getopt, pprint
+import matplotlib.pyplot as plt
+
+plt.style.use('ggplot')
 
 class Database():
     def __init__(self):
@@ -11,6 +14,51 @@ class Database():
         self.db = self.client.db
         self.callCollection = self.db.callData
         self.ytCollection = self.db.YTData
+
+    def clusderDf(self):
+        """path = "res/KS_Mobile_Calls.csv"
+        self.cdf = pd.read_csv(path, delimiter=";", parse_dates=[['Call_Date', 'Time']], nrows=200)
+        levels = ["Call_Date", "Time", "Type"]
+
+        full_idx = pd.MultiIndex.from_product([self.df.index.levels[0],
+                                               self.df.index.levels[1],
+                                               self.df.index.levels[2]],
+                                              names=levels)
+
+        self.cdf.drop('Program', axis=1, inplace=True)
+        self.cdf.drop('Service', axis=1, inplace=True)
+        """
+        path = "res/KS_Mobile_Calls.csv"
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=2000)
+        self.cdf.drop('Program', axis=1, inplace=True)
+        self.cdf.drop('Service', axis=1, inplace=True)
+
+        self.cdf = self.cdf.groupby(level=[0, 1, 2])["Offered_Calls"].sum()
+
+        levels = ["Call_Date", "Time", "Type"]
+
+        full_idx = pd.MultiIndex.from_product([self.cdf.index.levels[0],
+                                               self.cdf.index.levels[1],
+                                               self.cdf.index.levels[2]],
+                                              names=levels)
+
+        self.cdf = self.cdf.reindex(full_idx.unique()).fillna(0).to_frame()
+        self.cdf.index.names = levels
+
+        datelist = self.cdf.index.get_level_values(0)
+        hourlist = self.cdf.index.get_level_values(1)
+
+        datelist = (list(map(lambda dfdate, dftime:
+                             datetime.combine(dfdate.date(), datetime.strptime(dftime, "%H:%M:%S").time()),
+                             datelist, hourlist)))
+
+        self.cdf['type'] = self.cdf.index.get_level_values('Type')
+
+        self.cdf.index = pd.DatetimeIndex(datelist)
+        self.cdf.plot(kind='bar')
+        plt.show()
+        print(self.cdf)
+
 
     def updateCallCollection(self, nrows=None):
         '''
@@ -21,7 +69,7 @@ class Database():
         '''
         self.callCollection.remove()
         path = "res/KS_Mobile_Calls.csv"
-        self.df = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
+        self.df = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=200)
         self.df.drop('Program', axis=1, inplace=True)
         self.df.drop('Service', axis=1, inplace=True)
         self.addEmptyhour()
@@ -38,14 +86,23 @@ class Database():
         dates = []
         times = []
         days = []
-        for date in df.index.get_level_values(0):
-            dates.append(self.addMonth(date)[0])
-            days.append(self.addMonth(date)[1])
+        combined = []
         for time in df.index.get_level_values(1):
-            times.append(self.addQuarterlyHour(time))
+            hour = self.addQuarterlyHour(time)
+            times.append(hour)
+        for date in df.index.get_level_values(0):
+            month = self.addMonth(date)[0]
+            day = self.addMonth(date)[1]
+            dates.append(month)
+            days.append(day)
+
+        for number, item in enumerate(dates):
+            combined.append(dates[number] + times[number] + days[number])
+
         df = df.assign(month=dates)
         df = df.assign(quarterlyHour=times)
         df = df.assign(weekday=days)
+        df = df.assign(combinedDummy=combined)
 
         jsonData = json.loads(df.reset_index().to_json(orient="records"))
         collection.insert_many(jsonData)
@@ -114,12 +171,27 @@ class Database():
         self.df = self.df.reindex(full_idx.unique()).fillna(0).to_frame()
         self.df.index.names = levels
 
-
+    def returnCombinedDummyColumn(self, colList):
+        '''
+        combines all content of a column of a collection to one long list
+        :param colList: mongoDB collection
+        :return: list
+        '''
+        dataFrame = self.callCollection.find()
+        resultList = []
+        for line in dataFrame:
+            print('hallo')
+            bufferList = []
+            for colName in colList:
+                print(line[colName])
+                bufferList += line[colName]
+                print(bufferList)
+            resultList.append(bufferList)
+        print(len(resultList))
+        #self.df.assign(combinedDummy=resultList)
 
 
 if __name__ == "__main__":
     c = Database() # create database.py object
-    c.updateCallCollection(nrows=2000) # read database (with 2000 rows)
-    print('--- Database initiated. Head looks like this:')
-    print(c.df.head())
+    c.clusderDf() # read database (with 2000 rows)
 
