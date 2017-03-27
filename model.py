@@ -1,12 +1,15 @@
 from database import Database
 from pymongo import MongoClient
 import datetime
+import numpy as np
 
 
 class Model(Database):
     def __init__(self):
         Database.__init__(self)
-
+        self.dataFrame = self.clusderDf()
+        #shift this to database.py:
+        self.updateCallCollection()
 
     def returnColumn(self, columnName, limit=None):
         '''
@@ -29,7 +32,7 @@ class Model(Database):
         '''
         resultList = []
 
-        for line in self.callCollection.find({'Type': type}):
+        for line in self.dataFrame.find({'Type': type}):
             resultList.append(line[columnName])
         return(resultList)
 
@@ -44,34 +47,17 @@ class Model(Database):
             keyList.append(key)
         return(keyList)
 
-    def dummyToQuarterlyHour(self, dummy):
+    def dummyArrayToDatetime(self, dummy):
         '''
         transforms a dummy array consisting of [0, ..., 1, 0] into a datetime object
         :param dummy: list
-        :return: datetime object
+        :return: list containing
         '''
-        minute = 0
-        hour = 0
-        month = 0
-        weekday = 0
-        if 1 in dummy[12:36]:
-            minute = 0
-            hour = dummy[12:36].index(1)
-        elif 1 in dummy[36:60]:
-            minute = 15
-            hour = dummy[36:60].index(1)
-        elif 1 in dummy[60:84]:
-            minute = 30
-            hour = dummy[60:84].index(1)
-        elif 1 in dummy[84:108]:
-            minute = 45
-            hour = dummy[84:108].index(1)
+        print('ummy:', dummy)
+        index = np.where(self.dataFrame['combinedDummy'] == dummy)
+        print(index)
+        return(index)
 
-
-        month = dummy[0:12].index(1)
-        weekday = dummy[108:].index(1)
-
-        return(datetime.time(hour, minute), month, weekday)
 
 
 if __name__ == "__main__":

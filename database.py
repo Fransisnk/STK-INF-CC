@@ -5,6 +5,8 @@ import pandas as pd
 from datetime import datetime
 import sys, getopt, pprint
 import matplotlib.pyplot as plt
+from matplotlib.dates import DAILY
+
 
 plt.style.use('ggplot')
 
@@ -52,13 +54,22 @@ class Database():
                              datetime.combine(dfdate.date(), datetime.strptime(dftime, "%H:%M:%S").time()),
                              datelist, hourlist)))
 
-        self.cdf['type'] = self.cdf.index.get_level_values('Type')
+        self.cdf['Type'] = self.cdf.index.get_level_values('Type')
 
         self.cdf.index = pd.DatetimeIndex(datelist)
-        self.cdf.plot(kind='bar')
-        plt.show()
-        print(self.cdf)
+        self.cdf.sort_index(inplace=True)
+        #self.cdf.plot(kind='bar')
+        bestillings = self.cdf.loc[self.cdf['Type'] == 'Mobile Bestilling']['Offered_Calls'].tolist()
+        dates = self.cdf.loc[self.cdf['Type'] == 'Mobile Bestilling'].index.get_level_values(0).tolist()
+        plt.plot(dates, bestillings)
+        plt.xlabel('time')
 
+
+        #plt.show() ----------------------------------------- show results
+
+        #creates combined dummy data array and adds it to dataframe
+        datetimeFromIndex = self.cdf.index.get_level_values(0).to_datetime()
+        self.cdf['combinedDummy']= pd.Series(self.returnCombinedDummyColumn(datetimeFromIndex), index=self.cdf.index) #:Yr[3]+Month[12]+Dayofmonth[31]+Weekday[7]+QuarterlyHours[96]
 
     def updateCallCollection(self, nrows=None):
         '''
@@ -73,7 +84,7 @@ class Database():
         self.df.drop('Program', axis=1, inplace=True)
         self.df.drop('Service', axis=1, inplace=True)
         self.addEmptyhour()
-        self.csvToDB(self.callCollection, self.df)
+        self.csvToDB(self.callCollection, self.cdf)
 
     def csvToDB(self, collection, df):
         """
@@ -87,17 +98,21 @@ class Database():
         times = []
         days = []
         combined = []
+        years = []
+        print('datetime:', df.index.get_level_values(0))
         for time in df.index.get_level_values(1):
             hour = self.addQuarterlyHour(time)
             times.append(hour)
         for date in df.index.get_level_values(0):
             month = self.addMonth(date)[0]
             day = self.addMonth(date)[1]
+            year = self.addMonth(date)[2]
             dates.append(month)
             days.append(day)
+            years.append(year)
 
         for number, item in enumerate(dates):
-            combined.append(dates[number] + times[number] + days[number])
+            combined.append(dates[number] + times[number] + days[number] + years[number])
 
         df = df.assign(month=dates)
         df = df.assign(quarterlyHour=times)
@@ -107,17 +122,28 @@ class Database():
         jsonData = json.loads(df.reset_index().to_json(orient="records"))
         collection.insert_many(jsonData)
 
-    def addMonth(self, dt):
-        """
-        takes datetime object, reads month from it, returns list[12] with all '0', except one '1' for the number of the corresponding month
-        :param dt:datetime
-        :return months:list
-        """
-        day = [0] * 7
-        day[dt.weekday()] = 1
-        months = [0] * 12
-        months[dt.month -1] = 1
-        return(months, day)
+    # def addMonth(self, dt):
+    #     """
+    #     takes datetime object, reads month from it, returns list[12] with all '0', except one '1' for the number of the corresponding month
+    #     :param dt:datetime
+    #     :return months:list
+    #     """
+    #     #print(dt.year)
+    #     day = [0] * 7
+    #     day[dt.weekday()] = 1
+    #     months = [0] * 12
+    #     months[dt.month -1] = 1
+    #     year = [0] * 3
+    #     dayOfMonth = [0] * 31
+    #     print('year:', dt.year)
+    #     if dt.year == 2013:
+    #         year[0] = 1
+    #     elif dt.year == 2014:
+    #         year[1] = 1
+    #     elif dt.year == 2015:
+    #         year[2] = 1
+    #     dayOfMonth[dt.day] = 1
+    #     return(months, day, year, dayOfMonth)
 
     def addQuarterlyHour(self, dt):
         '''
@@ -127,13 +153,13 @@ class Database():
         :param dt: string
         :return: list
         '''
-        newDt = datetime.strptime(dt, "%H:%M:%S") #transforms string to datetime object
+        #newDt = datetime.strptime(dt, "%H:%M:%S") #transforms string to datetime object
         quarters0 = [0] * 24
         quarters1 = [0] * 24
         quarters2 = [0] * 24
         quarters3 = [0] * 24
-        hour = newDt.hour
-        minute = newDt.minute
+        hour = dt.hour
+        minute = dt.minute
 
         if minute == 0:
             quarters0[hour] = 1
@@ -145,11 +171,6 @@ class Database():
             quarters3[hour] = 1
         collectedList = quarters0 + quarters1 + quarters2 + quarters3
         return(collectedList)
-
-        # numberToAdd = datetime.hour * 4
-        # numberToAdd += (datetime.minute % 4)
-        # quarters[numberToAdd] = 1
-        # return(quarters)
 
     def addEmptyhour(self):
         """
@@ -171,27 +192,36 @@ class Database():
         self.df = self.df.reindex(full_idx.unique()).fillna(0).to_frame()
         self.df.index.names = levels
 
-    def returnCombinedDummyColumn(self, colList):
+    def returnCombinedDummyColumn(self, dtList):
         '''
-        combines all content of a column of a collection to one long list
+        combines all content of a liste of datetimes to one long list
         :param colList: mongoDB collection
         :return: list
         '''
-        dataFrame = self.callCollection.find()
-        resultList = []
-        for line in dataFrame:
-            print('hallo')
-            bufferList = []
-            for colName in colList:
-                print(line[colName])
-                bufferList += line[colName]
-                print(bufferList)
-            resultList.append(bufferList)
-        print(len(resultList))
-        #self.df.assign(combinedDummy=resultList)
+        combinedResult = []
 
+        for dt in dtList:
+            singleCombined = []
+            weekday = [0] * 7
+            weekday[dt.weekday()] = 1
+            months = [0] * 12
+            months[dt.month - 1] = 1 # - 1: returns value between 1 and 12
+            years = [0] * 3
+            if dt.year == 2013:
+                years[0] = 1
+            elif dt.year == 2014:
+                years[1] = 1
+            elif dt.year == 2015:
+                years[2] = 1
+            dayOfMonth = [0] * 31
+            dayOfMonth[dt.day - 1] = 1
+            singleCombined += years + months + dayOfMonth + weekday + self.addQuarterlyHour(dt)
+            combinedResult.append(singleCombined)
+
+        return combinedResult
 
 if __name__ == "__main__":
     c = Database() # create database.py object
     c.clusderDf() # read database (with 2000 rows)
+    print(c.cdf)
 
