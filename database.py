@@ -38,17 +38,27 @@ class Database():
         dates = []
         times = []
         days = []
-        for date in df.index.get_level_values(0):
-            dates.append(self.addMonth(date)[0])
-            days.append(self.addMonth(date)[1])
+        combined = []
         for time in df.index.get_level_values(1):
-            times.append(self.addQuarterlyHour(time))
+            hour = self.addQuarterlyHour(time)
+            times.append(hour)
+        for date in df.index.get_level_values(0):
+            month = self.addMonth(date)[0]
+            day = self.addMonth(date)[1]
+            dates.append(month)
+            days.append(day)
+
+        for number, item in enumerate(dates):
+            combined.append(dates[number] + times[number] + days[number])
+
         df = df.assign(month=dates)
         df = df.assign(quarterlyHour=times)
         df = df.assign(weekday=days)
+        df = df.assign(combinedDummy=combined)
 
         jsonData = json.loads(df.reset_index().to_json(orient="records"))
         collection.insert_many(jsonData)
+
 
     def addMonth(self, dt):
         """
@@ -114,12 +124,27 @@ class Database():
         self.df = self.df.reindex(full_idx.unique()).fillna(0).to_frame()
         self.df.index.names = levels
 
-
+    def returnCombinedDummyColumn(self, colList):
+        '''
+        combines all content of a column of a collection to one long list
+        :param colList: mongoDB collection
+        :return: list
+        '''
+        dataFrame = self.callCollection.find()
+        resultList = []
+        for line in dataFrame:
+            print('hallo')
+            bufferList = []
+            for colName in colList:
+                print(line[colName])
+                bufferList += line[colName]
+                print(bufferList)
+            resultList.append(bufferList)
+        print(len(resultList))
+        #self.df.assign(combinedDummy=resultList)
 
 
 if __name__ == "__main__":
     c = Database() # create database.py object
-    c.updateCallCollection(nrows=2000) # read database (with 2000 rows)
-    print('--- Database initiated. Head looks like this:')
-    print(c.df.head())
-
+    c.updateCallCollection() # read database (with 2000 rows)
+    print('--- Database initiated.')

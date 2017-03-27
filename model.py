@@ -20,14 +20,15 @@ class Model(Database):
             resultList.append(line[columnName])
         return(resultList)
 
-    def returnColumnForType(self, columnName, type):
+    def reduceColumnToType(self, type, columnName):
         '''
-        returns the column of a given [columnName], for a certain specified type [Bestilling, etc.]
+        returns the dataframe reduced to a certain specified type [Bestilling, etc.], limited to [limit] lines (default: no limit)
         :param columnName: string
         :param type: string
         :return: list
         '''
         resultList = []
+
         for line in self.callCollection.find({'Type': type}):
             resultList.append(line[columnName])
         return(resultList)
@@ -43,23 +44,6 @@ class Model(Database):
             keyList.append(key)
         return(keyList)
 
-
-    def returnCombinedColumn(self, colList):
-        '''
-        combines all content of a column of a collection to one long list
-        :param colList: mongoDB collection
-        :return: list
-        '''
-        dataFrame = model.callCollection.find()
-        resultList = []
-        for line in dataFrame:
-            bufferList = []
-            for colName in colList:
-                bufferList += line[colName]
-            resultList.append(bufferList)
-        return(resultList)
-
-
     def dummyToQuarterlyHour(self, dummy):
         '''
         transforms a dummy array consisting of [0, ..., 1, 0] into a datetime object
@@ -68,32 +52,43 @@ class Model(Database):
         '''
         minute = 0
         hour = 0
-        if 1 in dummy[:23]:
+        month = 0
+        weekday = 0
+        if 1 in dummy[12:36]:
             minute = 0
-            hour = dummy[:23].index(1)
-        elif 1 in dummy[24:47]:
+            hour = dummy[12:36].index(1)
+        elif 1 in dummy[36:60]:
             minute = 15
-            hour = dummy[24:47].index(1)
-        elif 1 in dummy[48:71]:
+            hour = dummy[36:60].index(1)
+        elif 1 in dummy[60:84]:
             minute = 30
-            hour = dummy[48:71].index(1)
-        elif 1 in dummy[72:95]:
+            hour = dummy[60:84].index(1)
+        elif 1 in dummy[84:108]:
             minute = 45
-            hour = dummy[72:95].index(1)
-        return(datetime.time(hour, minute))
+            hour = dummy[84:108].index(1)
 
 
+        month = dummy[0:12].index(1)
+        weekday = dummy[108:].index(1)
+
+        return(datetime.time(hour, minute), month, weekday)
 
 
 if __name__ == "__main__":
     model = Model()
 
-    columnList = ['quarterlyHour', 'month']
 
     # testing backtransformation from dummy array to datetime.time object
-    singleTestDummy = model.returnColumn('quarterlyHour', limit=1000)
-    for line in singleTestDummy:
-        print(model.dummyToQuarterlyHour(line))
+    # singleTestDummy = model.returnColumn('quarterlyHour', limit=1000)
+    # for line in singleTestDummy:
+    #     print(model.dummyToQuarterlyHour(line))
+
+    # combinedTestDummy = model.returnColumn('combinedDummy')
+    # print(len(combinedTestDummy))
+    # print(combinedTestDummy)
+    # reducedList = model.reduceColumnToType('Mobile Bestilling', 'combinedDummy')
+    # print(len(reducedList))
+    # print(reducedList)
 
     # returns all columns contained in matrix
     print(model.returnAllColumnNames(model.callCollection))
