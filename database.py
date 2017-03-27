@@ -39,17 +39,20 @@ class Database():
         times = []
         days = []
         combined = []
+        years = []
         for time in df.index.get_level_values(1):
             hour = self.addQuarterlyHour(time)
             times.append(hour)
         for date in df.index.get_level_values(0):
             month = self.addMonth(date)[0]
             day = self.addMonth(date)[1]
+            year = self.addMonth(date)[2]
             dates.append(month)
             days.append(day)
+            years.append(year)
 
         for number, item in enumerate(dates):
-            combined.append(dates[number] + times[number] + days[number])
+            combined.append(dates[number] + times[number] + days[number] + years[number])
 
         df = df.assign(month=dates)
         df = df.assign(quarterlyHour=times)
@@ -70,7 +73,14 @@ class Database():
         day[dt.weekday()] = 1
         months = [0] * 12
         months[dt.month -1] = 1
-        return(months, day)
+        year = [0] * 3
+        if dt.year == 2013:
+            year[0] = 1
+        elif dt.year == 2014:
+            year[1] = 1
+        elif dt.year == 2015:
+            year[2] = 1
+        return(months, day, year)
 
     def addQuarterlyHour(self, dt):
         '''
@@ -133,14 +143,12 @@ class Database():
         dataFrame = self.callCollection.find()
         resultList = []
         for line in dataFrame:
-            print('hallo')
             bufferList = []
             for colName in colList:
                 print(line[colName])
                 bufferList += line[colName]
                 print(bufferList)
             resultList.append(bufferList)
-        print(len(resultList))
         #self.df.assign(combinedDummy=resultList)
 
 

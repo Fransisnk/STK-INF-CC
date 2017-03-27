@@ -39,11 +39,17 @@ print('Variance score: %.2f' % regr.score(dateAndTime_test, calls_test))
 
 prediction = regr.predict(dateAndTime_test)
 
+
 for index, dummyArray in enumerate(dateAndTime_test):
-    dateAndTime_test[index] = model.dummyToQuarterlyHour(dummyArray)[0]
+    time = model.dummyToQuarterlyHour(dummyArray)[0]
+    month = model.dummyToQuarterlyHour(dummyArray)[1]
+    weekday = model.dummyToQuarterlyHour(dummyArray)[2]
+    year = model.dummyToQuarterlyHour(dummyArray)[3]
+    dateAndTime_test[index] = datetime.datetime(year, month, )
 
-
-
+#(year, month, day[, hour[, minute[, second[
+#for index, dummyArray in enumerate(dateAndTime_test):
+    #print(dateAndTime_test[index])
 
 
 

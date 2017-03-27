@@ -70,6 +70,7 @@ class Model(Database):
 
         month = dummy[0:12].index(1)
         weekday = dummy[108:].index(1)
+        year = dummy[]
 
         return(datetime.time(hour, minute), month, weekday)
 
