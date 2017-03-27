@@ -5,6 +5,8 @@ import pandas as pd
 from datetime import datetime
 import sys, getopt, pprint
 import matplotlib.pyplot as plt
+from matplotlib.dates import DAILY
+
 
 plt.style.use('ggplot')
 
@@ -29,7 +31,7 @@ class Database():
         self.cdf.drop('Service', axis=1, inplace=True)
         """
         path = "res/KS_Mobile_Calls.csv"
-        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=2000)
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=5000)
         self.cdf.drop('Program', axis=1, inplace=True)
         self.cdf.drop('Service', axis=1, inplace=True)
 
@@ -52,10 +54,17 @@ class Database():
                              datetime.combine(dfdate.date(), datetime.strptime(dftime, "%H:%M:%S").time()),
                              datelist, hourlist)))
 
-        self.cdf['type'] = self.cdf.index.get_level_values('Type')
+        self.cdf['Type'] = self.cdf.index.get_level_values('Type')
 
         self.cdf.index = pd.DatetimeIndex(datelist)
-        self.cdf.plot(kind='bar')
+        self.cdf.sort_index(inplace=True)
+        #self.cdf.plot(kind='bar')
+        bestillings = self.cdf.loc[self.cdf['Type'] == 'Mobile Bestilling']['Offered_Calls'].tolist()
+        dates = self.cdf.loc[self.cdf['Type'] == 'Mobile Bestilling'].index.get_level_values(0).tolist()
+        plt.plot(dates, bestillings)
+        plt.xlabel('time')
+
+
         plt.show()
         print(self.cdf)
 
