@@ -9,8 +9,8 @@ from linRegDB import linRegDB
 class linRegModel(linRegDB):
     def __init__(self):
         linRegDB.__init__(self)
-        self.clusderDf()
-        self.csvToDB(self.db.callcollection, self.cdf)
+        #self.clusderDf()
+        #self.csvToDB(self.db.callcollection, self.cdf)
         #shift this to database.py:
         #self.updateCallCollection()
 
@@ -26,18 +26,13 @@ class linRegModel(linRegDB):
             resultList.append(line[columnName])
         return(resultList)
 
-    def reduceColumnToType(self, type, columnName):
+    def reduceToType(self, type):
         '''
         returns the dataframe reduced to a certain specified type [Bestilling, etc.], limited to [limit] lines (default: no limit)
-        :param columnName: string
         :param type: string
         :return: list
         '''
-        resultList = []
-
-        for line in self.db.callcollection.find({'Type': type}):
-            resultList.append(line[columnName])
-        return(resultList)
+        return [line for line in self.callCollection.find({'Type': type})]
 
     def returnAllColumnNames(self, collection):
         '''
@@ -56,10 +51,25 @@ class linRegModel(linRegDB):
         :param dummy: list
         :return: list containing
         '''
-        print('ummy:', dummy)
-        index = np.where(self.cdf['combinedDummy'] == dummy)
-        print(index)
-        return(index)
+        #Yr[3] + Month[12] + Dayofmonth[31] + Weekday[7] + QuarterlyHours[96]
+        year = dummy[0:3].index(1)
+        month = dummy[3:15].index(1)
+        day = dummy[15:46].index(1)
+        # +7 for weekday
+        if 1 in dummy[53:77]:
+            hour = dummy[53:77].index(1)
+            minute = 00
+        elif 1 in dummy[77:101]:
+            hour = dummy[77:101].index(1)
+            minute = 15
+        elif 1 in dummy[101:125]:
+            hour = dummy[101:125].index(1)
+            minute = 30
+        elif 1 in dummy[125:149]:
+            hour = dummy[125:149].index(1)
+            minute = 45
+        result = datetime.datetime(year=year, month=month, day=day, hour=hour, minute=minute)
+        return(result)
 
 
 
@@ -80,7 +90,7 @@ if __name__ == "__main__":
     # print(reducedList)
 
     # returns all columns contained in matrix
-    print(linRegModel.returnAllColumnNames(linRegModel.callCollection))
+    #print(linRegModel.returnAllColumnNames(linRegModel.callCollection))
     #print(model.returnCombinedColumn(columnList))
 
     # returns all rows for type "Bestilling"
