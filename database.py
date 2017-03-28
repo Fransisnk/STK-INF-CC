@@ -84,7 +84,7 @@ class Database():
         self.df.drop('Program', axis=1, inplace=True)
         self.df.drop('Service', axis=1, inplace=True)
         self.addEmptyhour()
-        self.csvToDB(self.callCollection, self.cdf)
+        self.csvToDB(self.callCollection, self.df)
 
     def csvToDB(self, collection, df):
         """
@@ -122,28 +122,28 @@ class Database():
         jsonData = json.loads(df.reset_index().to_json(orient="records"))
         collection.insert_many(jsonData)
 
-    # def addMonth(self, dt):
-    #     """
-    #     takes datetime object, reads month from it, returns list[12] with all '0', except one '1' for the number of the corresponding month
-    #     :param dt:datetime
-    #     :return months:list
-    #     """
-    #     #print(dt.year)
-    #     day = [0] * 7
-    #     day[dt.weekday()] = 1
-    #     months = [0] * 12
-    #     months[dt.month -1] = 1
-    #     year = [0] * 3
-    #     dayOfMonth = [0] * 31
-    #     print('year:', dt.year)
-    #     if dt.year == 2013:
-    #         year[0] = 1
-    #     elif dt.year == 2014:
-    #         year[1] = 1
-    #     elif dt.year == 2015:
-    #         year[2] = 1
-    #     dayOfMonth[dt.day] = 1
-    #     return(months, day, year, dayOfMonth)
+    def addMonth(self, dt):
+        """
+        takes datetime object, reads month from it, returns list[12] with all '0', except one '1' for the number of the corresponding month
+        :param dt:datetime
+        :return months:list
+        """
+        #print(dt.year)
+        day = [0] * 7
+        day[dt.weekday()] = 1
+        months = [0] * 12
+        months[dt.month -1] = 1
+        year = [0] * 3
+        dayOfMonth = [0] * 31
+        print('year:', dt.year)
+        if dt.year == 2013:
+            year[0] = 1
+        elif dt.year == 2014:
+            year[1] = 1
+        elif dt.year == 2015:
+            year[2] = 1
+        dayOfMonth[dt.day] = 1
+        return(months, day, year, dayOfMonth)
 
     def addQuarterlyHour(self, dt):
         '''
@@ -154,12 +154,16 @@ class Database():
         :return: list
         '''
         #newDt = datetime.strptime(dt, "%H:%M:%S") #transforms string to datetime object
+        dtObject = dt
+        if type(dt) == str:
+            dtObject = datetime.strptime(dt, "%H:%M:%S")
+
         quarters0 = [0] * 24
         quarters1 = [0] * 24
         quarters2 = [0] * 24
         quarters3 = [0] * 24
-        hour = dt.hour
-        minute = dt.minute
+        hour = dtObject.hour
+        minute = dtObject.minute
 
         if minute == 0:
             quarters0[hour] = 1
