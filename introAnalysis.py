@@ -6,16 +6,27 @@ import matplotlib.pyplot as plt
 # We need to check for this stuff because if there is serial (= in time) correlation
 # in the data a Time Series model will outperform OLS (linearRegression.py)
 
+# Getting data
 model = model.Model()
-bestilling_data = model.returnColumnForType('Offered_Calls', "Mobile Bestilling")
+bestilling_data = model.reduceColumnToType("Mobile Bestilling", 'Offered_Calls')
+print(bestilling_data)
+print(type(bestilling_data))
+
+# Trying to plot all the data
+# TODO: Fix plots and legend
+trans_bestilling = plt.plot(model.reduceColumnToType("Mobile Bestilling Transfer", 'Offered_Calls'), label='Bestilling Transfer')
+support = plt.plot(model.reduceColumnToType("Mobile Feil og Support", 'Offered_Calls'), label='Mobile Feil og Support')
+faktura = plt.plot(model.reduceColumnToType("Mobile Faktura", 'Offered_Calls'), label='Faktura')
+bestilling_plot = plt.plot(bestilling_data, label='Bestilling')
+#plt.legend(handles=[trans_bestilling, support, faktura, bestilling_plot])
+
+print(type(trans_bestilling))
+print(trans_bestilling)
+
 # --- Autocovariance Function ---
 # Covariance (dependence) of data between a point in time T and in lagged time T+h
 # [where h is the lag]; we basically see how much the data is dependent with itself
 # throughout time while we are further in time (when lag is increasing)
-plt.plot(model.returnColumn('Offered_Calls'))
-plt.plot(bestilling_data)
-plt.show()
-# It's weird that there is no more Bestilling after some time, right?
 
 autocovariance_function_array = ts_tools.acovf(bestilling_data)
 partial_autocovariance_function_array = ts_tools.pacf(bestilling_data)
