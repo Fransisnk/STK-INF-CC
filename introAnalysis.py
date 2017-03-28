@@ -1,27 +1,48 @@
 import statsmodels.tsa.stattools as ts_tools
 import statsmodels.graphics.tsaplots as ts_plots
-import model
+import linRegModel
 import matplotlib.pyplot as plt
-
-# We need to check for this stuff because if there is serial (= in time) correlation
-# in the data a Time Series model will outperform OLS (linearRegression.py)
+import datetime
+import pandas as pd
 
 # Getting data
-model = model.Model()
-bestilling_data = model.reduceColumnToType("Mobile Bestilling", 'Offered_Calls')
+def getEasyData(type):
+    """
+    Function created just to get simple time series from our DB
+    :param type: String, type of service to extract
+    :return: time series object
+    """
+    # TODO: get 'datetime' from list of lists, combining "Call_Date" (which is in some weird form) and "Time"
+
+    model = linRegModel.linRegModel()
+    data = model.reduceToType(type)
+    print(data)
+    timeData = []
+    callData = []
+    for line in data:
+        print(line['Call_Date'])
+        print(datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S'))
+        timeData.append(datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S'))
+        callData.append(line['Offered_Calls'])
+    return pd.Series(callData, index=timeData)
+
+# We need to check for this stuff because if there is serial (= in time) correlation in the data,
+# a Time Series model will outperform OLS (linearRegression.py)
+
+bestilling_data = getEasyData('Mobile Bestilling')
 print(bestilling_data)
 print(type(bestilling_data))
 
 # Trying to plot all the data
 # TODO: Fix plots and legend
-trans_bestilling = plt.plot(model.reduceColumnToType("Mobile Bestilling Transfer", 'Offered_Calls'), label='Bestilling Transfer')
-support = plt.plot(model.reduceColumnToType("Mobile Feil og Support", 'Offered_Calls'), label='Mobile Feil og Support')
-faktura = plt.plot(model.reduceColumnToType("Mobile Faktura", 'Offered_Calls'), label='Faktura')
+#trans_bestilling = plt.plot(getEasyData("Mobile Bestilling Transfer"), label='Bestilling Transfer')
+#support = plt.plot(getEasyData("Mobile Feil og Support"), label='Mobile Feil og Support')
+#faktura = plt.plot(getEasyData("Mobile Faktura"), label='Faktura')
 bestilling_plot = plt.plot(bestilling_data, label='Bestilling')
 #plt.legend(handles=[trans_bestilling, support, faktura, bestilling_plot])
 
-print(type(trans_bestilling))
-print(trans_bestilling)
+#print(type(trans_bestilling))
+#print(trans_bestilling)
 
 # --- Autocovariance Function ---
 # Covariance (dependence) of data between a point in time T and in lagged time T+h
