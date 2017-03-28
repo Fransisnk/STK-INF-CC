@@ -11,6 +11,11 @@ def createHtmlWeather(url, filename_ext):
     :param filename_ext: Str structured like this: 'filename.ext'
     :return: Str with file path to saved html/xml file
     """
+    request = u.Request(url)
+    request.add_header('Accept-Encoding', 'utf-8')
+    response = u.urlopen(request)
+    soup = bs(response.read().decode('utf-8', 'ignore'))
+
     response = u.urlopen(url)
     webContent = response.read()
 
@@ -40,6 +45,7 @@ def getPastWeather(date):
 
     with open(filepath, "r") as html:
         soup = bs(html, "html.parser")
+
 
     tab = soup.findAll("table", {"class": "yr-table yr-table-hourly yr-popup-area"}, limit=1)
 
