@@ -7,14 +7,17 @@ import matplotlib.pyplot as plt
 # in the data a Time Series model will outperform OLS (linearRegression.py)
 
 model = model.Model()
-bestilling_data = model.returnColumnForType('Offered_Calls', "Mobile Bestilling")
+bestilling_data = model.reduceColumnToType("Mobile Bestilling", 'Offered_Calls')
 # --- Autocovariance Function ---
 # Covariance (dependence) of data between a point in time T and in lagged time T+h
 # [where h is the lag]; we basically see how much the data is dependent with itself
 # throughout time while we are further in time (when lag is increasing)
-plt.plot(model.returnColumn('Offered_Calls'))
-plt.plot(bestilling_data)
-plt.show()
+trans_bestilling = plt.plot(model.reduceColumnToType("Mobile Bestilling Transfer", 'Offered_Calls'), label='Bestilling Transfer')
+support = plt.plot(model.reduceColumnToType("Mobile Feil og Support", 'Offered_Calls'), label='Mobile Feil og Support')
+faktura = plt.plot(model.reduceColumnToType("Mobile Faktura", 'Offered_Calls'), label='Faktura')
+bestilling_plot = plt.plot(bestilling_data, label='Bestilling')
+#plt.legend(handles=[trans_bestilling, support, faktura, bestilling_plot])
+
 # It's weird that there is no more Bestilling after some time, right?
 
 autocovariance_function_array = ts_tools.acovf(bestilling_data)
