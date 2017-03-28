@@ -11,6 +11,7 @@ model = model.Model()
 
 #reading data
 timeData = model.reduceColumnToType('Mobile Bestilling', 'combinedDummy')
+print(len(timeData[55])) # Yr[3]+Month[12]+Dayofmonth[31]+Weekday[7]+QuarterlyHours[96]
 callData = model.reduceColumnToType('Mobile Bestilling', 'Offered_Calls')
 
 # splitting up 20% of data
@@ -38,12 +39,19 @@ print('Variance score: %.2f' % regr.score(dateAndTime_test, calls_test))
 
 
 prediction = regr.predict(dateAndTime_test)
+print(prediction)
+
 
 for index, dummyArray in enumerate(dateAndTime_test):
-    dateAndTime_test[index] = model.dummyToQuarterlyHour(dummyArray)[0]
+    dateAndTime_test[index] = model.dummyArrayToDatetime(dummyArray)
+#     month = model.dummyToQuarterlyHour(dummyArray)[1]
+#     weekday = model.dummyToQuarterlyHour(dummyArray)[2]
+#     year = model.dummyToQuarterlyHour(dummyArray)[3]
+#     dateAndTime_test[index] = datetime.datetime(year, month, )
 
-
-
+#(year, month, day[, hour[, minute[, second[
+#for index, dummyArray in enumerate(dateAndTime_test):
+    #print(dateAndTime_test[index])
 
 
 
