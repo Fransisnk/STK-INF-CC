@@ -142,7 +142,7 @@ class Database():
             year[1] = 1
         elif dt.year == 2015:
             year[2] = 1
-        dayOfMonth[dt.day] = 1
+        dayOfMonth[dt.day - 1] = 1
         return(months, day, year, dayOfMonth)
 
     def addQuarterlyHour(self, dt):
