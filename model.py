@@ -32,7 +32,7 @@ class Model(Database):
         '''
         resultList = []
 
-        for line in self.dataFrame.find({'Type': type}):
+        for line in self.callCollection.find({'Type': type}):
             resultList.append(line[columnName])
         return(resultList)
 
@@ -53,7 +53,7 @@ class Model(Database):
         :param dummy: list
         :return: list containing
         '''
-        print('ummy:', dummy)
+        print('dummy:', dummy)
         index = np.where(self.dataFrame['combinedDummy'] == dummy)
         print(index)
         return(index)
