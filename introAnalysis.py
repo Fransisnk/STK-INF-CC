@@ -1,21 +1,53 @@
 import statsmodels.tsa.stattools as ts_tools
 import statsmodels.graphics.tsaplots as ts_plots
-import model
+import linRegModel
 import matplotlib.pyplot as plt
+import datetime
+import pandas as pd
 
-# We need to check for this stuff because if there is serial (= in time) correlation
-# in the data a Time Series model will outperform OLS (linearRegression.py)
+# Getting data
+def getEasyData(type):
+    """
+    Function created just to get simple time series from our DB
+    :param type: String, type of service to extract
+    :return: time series object
+    """
+    # TODO: get 'datetime' from list of lists, combining "Call_Date" (which is in some weird form) and "Time"
 
-model = model.Model()
-bestilling_data = model.returnColumnForType('Offered_Calls', "Mobile Bestilling")
+    model = linRegModel.linRegModel()
+    data = model.reduceToType(type)
+    print(data)
+    timeData = []
+    callData = []
+    for line in data:
+        print(line['Call_Date'])
+        print(datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S'))
+        timeData.append(datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S'))
+        callData.append(line['Offered_Calls'])
+    return pd.Series(callData, index=timeData)
+
+# We need to check for this stuff because if there is serial (= in time) correlation in the data,
+# a Time Series model will outperform OLS (linearRegression.py)
+
+bestilling_data = getEasyData('Mobile Bestilling')
+print(bestilling_data)
+print(type(bestilling_data))
+
+# Trying to plot all the data
+# TODO: Fix plots and legend
+#trans_bestilling = plt.plot(getEasyData("Mobile Bestilling Transfer"), label='Bestilling Transfer')
+#support = plt.plot(getEasyData("Mobile Feil og Support"), label='Mobile Feil og Support')
+#faktura = plt.plot(getEasyData("Mobile Faktura"), label='Faktura')
+bestilling_plot = plt.plot(bestilling_data, label='Bestilling')
+#plt.legend(handles=[trans_bestilling, support, faktura, bestilling_plot])
+
+#print(type(trans_bestilling))
+#print(trans_bestilling)
+
 # --- Autocovariance Function ---
 # Covariance (dependence) of data between a point in time T and in lagged time T+h
 # [where h is the lag]; we basically see how much the data is dependent with itself
 # throughout time while we are further in time (when lag is increasing)
-plt.plot(model.returnColumn('Offered_Calls'))
-plt.plot(bestilling_data)
-plt.show()
-# It's weird that there is no more Bestilling after some time, right?
 
 autocovariance_function_array = ts_tools.acovf(bestilling_data)
 partial_autocovariance_function_array = ts_tools.pacf(bestilling_data)
