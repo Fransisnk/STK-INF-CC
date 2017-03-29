@@ -1,9 +1,11 @@
 from sklearn.cluster import KMeans
+from sklearn.neural_network import MLPClassifier
 from database import Database
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from database import datetime
+from datetime import timedelta
 import itertools
 
 class Kmean(Database):
@@ -22,7 +24,7 @@ class Kmean(Database):
     def clusterDf(self):
 
         path = "res/KS_Mobile_Calls.csv"
-        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'])
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=205500)
         self.cdf.drop('Program', axis=1, inplace=True)
         self.cdf.drop('Service', axis=1, inplace=True)
 
@@ -49,6 +51,8 @@ class Kmean(Database):
 
         self.cdf.index = pd.DatetimeIndex(datelist)
         self.cdf.sort_index(inplace=True)
+
+
 
     def learnFromDummy(self):
         array = []
@@ -100,9 +104,50 @@ class Kmean(Database):
         plt.xlabel('time')
         plt.show()
 
+    def neuralN(self, x, y):
+        self.clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(90,50), random_state=1)
+        self.clf.fit(x, y)
+
+
+    def dataprep(self, ntdays=21):
+        Xlist = []
+        ylist = []
+        df = self.cdf
+        mindate = df.index.min()
+        maxdate = df.index.max()
+        stopdate = maxdate - timedelta(days=ntdays)
+
+
+        traindf=df[mindate:stopdate]
+        testdf=df[stopdate:maxdate]
+
+        for index, row in traindf.loc[traindf['Type'] == 'Mobile Bestilling'].iterrows():
+
+            #print(index)
+            #print(row)
+            Xlist.append(row["combinedDummy"])
+            ylist.append(int(row["Offered_Calls"]))
+
+        self.neuralN(Xlist, ylist)
+
+        xlist = []
+
+        for index, row in testdf.loc[testdf['Type'] == 'Mobile Bestilling'].iterrows():
+            xlist.append(row["combinedDummy"])
+        print(len(xlist))
+        print(testdf)
+
+        bestillings = df.loc[df['Type'] == 'Mobile Bestilling']['Offered_Calls'].tolist()
+        dates = df.loc[df['Type'] == 'Mobile Bestilling'].index.get_level_values(0).tolist()
+        plt.plot(dates, bestillings)
+
+        predicted = self.clf.predict(xlist)
+        dates2 = testdf[testdf['Type'] == 'Mobile Bestilling'].index.get_level_values(0).tolist()
+        plt.plot(dates2, predicted, "r")
+        plt.show()
 
 
 if __name__ == "__main__":
     c = Kmean()
-    c.clusterDf()
-    c.dataSplit()
+    c.clusderDf()
+    c.dataprep()
