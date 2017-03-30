@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup as bs
 from urllib.request import urlretrieve, urlopen
 import pandas as pd
 from database import Database
+from math import sin, pi
 
 class YTScraper(Database):
 
@@ -10,12 +11,70 @@ class YTScraper(Database):
 
         self.url = "http://www.youtube.com/user/{0}/videos".format(account)
         self.soup = ""
+
+        self.campaign = pd.read_csv("publicRes/yt.csv", usecols=["Date", "ad"], index_col=[0], parse_dates=["Date"])
+        self.campaign = self.campaign[self.campaign.ad !=0]
+        self.campaign.sort_index(inplace=True)
+        self.clusderDf()
+
         # self.url = urlopen(self.url).read()
         # self.soup = bs(self.url, "html.parser")
         with open("publicRes/telenoryt.html", "r") as html:
             self.souplocal = bs(html, "html.parser")
 
         # self.page = bs(dow)
+    def getDaysSince(self, lim=14, df=None):
+        if df == None:
+            df = self.cdf
+        totdatelist = df.index.get_level_values(0)
+
+        #subtract some days
+        max = df.index.max().date()
+        min = df.index.min().date()
+
+
+
+        # Remove dublicates
+        self.campaign = self.campaign.groupby(self.campaign.index).first()
+
+        datedf = self.campaign[min:max]
+
+        #makes a new dataframe filled with all dates between start and stop
+        idx = pd.date_range(min, max)
+        datedf.index = pd.DatetimeIndex(datedf.index)
+        datedf = datedf.reindex(idx, fill_value=0)
+        print(type(datedf))
+
+        daysSince = []
+        funcDay = []
+        days = 0
+        rFlag = False
+        for day in datedf["ad"].tolist():
+            if days == lim:
+                rFlag = False
+                days = 0
+            if day == 1:
+                rFlag = True
+            if rFlag:
+                days += 1
+
+            daysSince.append(days)
+            funcDay.append(self.dayFunc(lim, days))
+
+        print(len(self.campaign), len(daysSince), len(funcDay))
+        datedf["Days since campaign"] = daysSince
+        datedf["Days in function"] = funcDay
+
+        print(datedf)
+
+    def dayFunc(self, lim, day):
+        """
+
+        :param lim:
+        :param day:
+        :return:
+        """
+        return sin(day*(pi/lim))
 
     def getRawVideoData(self):
         return self.soup.find_all("div", "yt-lockup-video")
@@ -79,3 +138,4 @@ class YTScraper(Database):
 
 if __name__ == "__main__":
     c = YTScraper("TelenorNorway")
+    c.getDaysSince()
