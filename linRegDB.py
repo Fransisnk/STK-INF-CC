@@ -6,7 +6,7 @@ from datetime import datetime
 import sys, getopt, pprint
 import matplotlib.pyplot as plt
 from matplotlib.dates import DAILY
-
+from ytScraper import YTScraper
 
 plt.style.use('ggplot')
 
@@ -19,7 +19,7 @@ class linRegDB():
 
     def clusderDf(self, nrows=None):
         path = "res/KS_Mobile_Calls.csv"
-        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=15000)
         self.cdf.drop('Program', axis=1, inplace=True)
         self.cdf.drop('Service', axis=1, inplace=True)
         self.cdf = self.cdf.groupby(level=[0, 1, 2])["Offered_Calls"].sum()
@@ -55,6 +55,7 @@ class linRegDB():
         self.cdf['dateTimeStrings'] = dateTimeStrings
 
         self.cdf['combinedDummy']= pd.Series(self.returnCombinedDummyColumn(datetimeFromIndex), index=self.cdf.index) #:Yr[3]+Month[12]+Dayofmonth[31]+Weekday[7]+QuarterlyHours[96]
+
 
     def updateCallCollection(self, nrows=None):
         '''
@@ -184,8 +185,15 @@ class linRegDB():
         :param colList: mongoDB collection
         :return: list
         '''
+        campdf = YTScraper("Telenor")
+        campdf = campdf.getDaysSince(self.cdf, 14)
+
         combinedResult = []
         for dt in dtList:
+
+            funcday = [campdf.loc[dt.date()]["Days in function"]]
+            dayssince = [campdf.loc[dt.date()]["Days since campaign"]]
+
             singleCombined = []
             weekday = [0] * 7
             weekday[dt.weekday()] = 1
@@ -203,16 +211,18 @@ class linRegDB():
                 years[1] = 1
             dayOfMonth = [0] * 31
             dayOfMonth[dt.day - 1] = 1
-            singleCombined += years + months + dayOfMonth + weekday + self.addQuarterlyHour(dt)
+            singleCombined += years + months + dayOfMonth + weekday + self.addQuarterlyHour(dt) + funcday + dayssince
             combinedResult.append(singleCombined)
         print(combinedResult[9])
 
         return combinedResult
 
+
+
 if __name__ == "__main__":
     c = linRegDB() # create database.py object
-    c.callCollection.remove()
+    #c.callCollection.remove()
     c.clusderDf() # read database (with 2000 rows)
-    c.csvToDB(c.callCollection, c.cdf)
-    for line in c.callCollection.find()[0:5]:
-        print(line)
+    #c.csvToDB(c.callCollection, c.cdf)
+    #for line in c.callCollection.find()[0:5]:
+    #    print(line)

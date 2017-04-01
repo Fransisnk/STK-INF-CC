@@ -15,7 +15,7 @@ class YTScraper(Database):
         self.campaign = pd.read_csv("publicRes/yt.csv", usecols=["Date", "ad"], index_col=[0], parse_dates=["Date"])
         self.campaign = self.campaign[self.campaign.ad !=0]
         self.campaign.sort_index(inplace=True)
-        self.clusderDf()
+        #self.clusderDf()
 
         # self.url = urlopen(self.url).read()
         # self.soup = bs(self.url, "html.parser")
@@ -23,9 +23,9 @@ class YTScraper(Database):
             self.souplocal = bs(html, "html.parser")
 
         # self.page = bs(dow)
-    def getDaysSince(self, lim=14, df=None):
-        if df == None:
-            df = self.cdf
+    def getDaysSince(self, df, lim=14):
+        #if df == 0:
+        #    df = self.cdf
         totdatelist = df.index.get_level_values(0)
 
         #subtract some days
@@ -43,7 +43,6 @@ class YTScraper(Database):
         idx = pd.date_range(min, max)
         datedf.index = pd.DatetimeIndex(datedf.index)
         datedf = datedf.reindex(idx, fill_value=0)
-        print(type(datedf))
 
         daysSince = []
         funcDay = []
@@ -61,11 +60,10 @@ class YTScraper(Database):
             daysSince.append(days)
             funcDay.append(self.dayFunc(lim, days))
 
-        print(len(self.campaign), len(daysSince), len(funcDay))
         datedf["Days since campaign"] = daysSince
         datedf["Days in function"] = funcDay
 
-        print(datedf)
+        return datedf
 
     def dayFunc(self, lim, day):
         """
