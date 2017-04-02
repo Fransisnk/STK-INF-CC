@@ -55,6 +55,8 @@ class linRegModel(linRegDB):
         year = dummy[0:3].index(1)
         month = dummy[3:15].index(1)
         day = dummy[15:46].index(1)
+        hour = 0
+        minute = 0
         # +7 for weekday
         if 1 in dummy[53:77]:
             hour = dummy[53:77].index(1)
