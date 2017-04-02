@@ -20,7 +20,7 @@ def getEasyData(type):
     timeData = []
     callData = []
     for line in data:
-        print(line['Call_Date'])
+        print(line['dateTimeStrings'])
         print(datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S'))
         timeData.append(datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S'))
         callData.append(line['Offered_Calls'])
