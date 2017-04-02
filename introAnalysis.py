@@ -48,8 +48,10 @@ bestillingSeries = getTSeries('Mobile Bestilling')
 # [where h is the lag]; we basically see how much the data is dependent with itself
 # throughout time while we are further in time (when lag is increasing)
 
-autocovariance_function_array = ts_tools.acovf(bestilling_data)
-partial_autocovariance_function_array = ts_tools.pacf(bestilling_data)
+cut_bestilling = bestillingSeries['2015':]
+
+autocovariance_function_array = ts_tools.acovf(cut_bestilling)
+partial_autocovariance_function_array = ts_tools.pacf(cut_bestilling)
 
 
 # --- Plot of Autocorrelation Function ---
