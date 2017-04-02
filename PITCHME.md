@@ -47,6 +47,24 @@ Test data:      20% of two years
 ![alt text](https://github.com/Fransisnk/STK-INF-CC/blob/master/plots/linRegZoom.png "One week of linear regression")
 Red Line is the prediction of the linear regression, blue line is the actual number of calls.
 
+Mean Squared Error:  258.569860202
+
+## Multi Layer Perceptron (MLP)
+![alt text](https://github.com/Fransisnk/STK-INF-CC/blob/master/plots/MLPOverview.png "Overview over the MLP")
+Green Line is the prediction of the MLP, blue line is the actual number of calls.
+
+Nodes per hidden layer: 150, 123 (2 hidden layers)
+
+Mean Squared Error:  225.371555916
+
+## MLP: one week
+![alt text](https://github.com/Fransisnk/STK-INF-CC/blob/master/plots/MLPZoom.png "One week of MLP")
+Green Line is the prediction of the MLP, blue line is the actual number of calls.
+
+Nodes per hidden layer: 150, 123 (2 hidden layers)
+
+Mean Squared Error:  225.371555916
+
 ## Preventing overfitting
 
 Used early stopping to prevent overfitting
