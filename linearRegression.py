@@ -85,7 +85,7 @@ regr = linear_model.LinearRegression()
 regr.fit(timeDummyData_train, calls_train)
 
 # training MLP
-clf = MLPClassifier(solver="adam", alpha=1e-5, hidden_layer_sizes=(170, 120), random_state=1, early_stopping=True)
+clf = MLPClassifier(solver="adam", alpha=1e-5, hidden_layer_sizes=(150, 123), random_state=1, early_stopping=True)
 clf.fit(timeDummyData_train, calls_train)
 
 # predicting LinReg and MLP
@@ -129,7 +129,8 @@ print('linReg MSE: ', MSEResults[0])
 print('MLP MSE: ', MSEResults[1])
 
 # the coefficients
-print('Coefficients: \n', regr.coef_)
+#print('Coefficients: \n', regr.coef_)
+
 # the mean squared error
 print("Mean squared error: %.2f"
       % np.mean((regr.predict(timeDummyData_test) - calls_test) ** 2))
@@ -141,8 +142,8 @@ print('Variance score: %.2f' % regr.score(timeDummyData_test, calls_test))
 print('mean of linregMSE: ', np.mean(MSEResults[2]))
 print('mean of MLP MSE: ', np.mean(MSEResults[3]))
 
-plt.plot(timeData[-percentageOfData:], predictionLinReg, 'r-', label='prediction of LinReg', markevery=100, markersize=5)
-#plt.plot(timeData[-percentageOfData:], predictionMLP, 'g-', label='mlpPrediction', markevery=100, markersize=3)
+#plt.plot(timeData[-percentageOfData:], predictionLinReg, 'r-', label='prediction of LinReg', markevery=100, markersize=5)
+plt.plot(timeData[-percentageOfData:], predictionMLP, 'g-', label='mlpPrediction', markevery=100, markersize=3)
 plt.plot(timeData[-percentageOfData:], calls_test, 'b-', label='actual calls', markevery=100, markersize=3)
 #plt.plot(timeData[-percentageOfData:], MSEResults[2], 'y-', label='LinReg delta', markevery=10000, markersize=5)
 #plt.plot(timeData[-percentageOfData:], MSEResults[3], 'm-', label='MLP delta', markevery=10000, markersize=5)

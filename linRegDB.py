@@ -19,7 +19,7 @@ class linRegDB():
 
     def clusderDf(self, nrows=None):
         path = "res/KS_Mobile_Calls.csv"
-        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=15000)
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
         self.cdf.drop('Program', axis=1, inplace=True)
         self.cdf.drop('Service', axis=1, inplace=True)
         self.cdf = self.cdf.groupby(level=[0, 1, 2])["Offered_Calls"].sum()
@@ -188,13 +188,12 @@ class linRegDB():
         :return: list
         '''
         campdf = YTScraper("Telenor")
-        campdf = campdf.getDaysSince(self.cdf, 14)
+        campdf = campdf.getDaysSince(self.cdf, 120)
 
         combinedResult = []
         for dt in dtList:
 
             funcday = [campdf.loc[dt.date()]["Days in function"]]
-            dayssince = [campdf.loc[dt.date()]["Days since campaign"]]
 
             singleCombined = []
             weekday = [0] * 7
@@ -203,7 +202,7 @@ class linRegDB():
             months[dt.month - 1] = 1 # - 1: returns value between 1 and 12
             dayOfMonth = [0] * 31
             dayOfMonth[dt.day - 1] = 1
-            singleCombined += months + dayOfMonth + weekday + self.addQuarterlyHour(dt) + funcday + dayssince
+            singleCombined += months + dayOfMonth + weekday + self.addQuarterlyHour(dt) + funcday
             combinedResult.append(singleCombined)
         print(combinedResult[9])
         print('length of dummy: ', len(combinedResult[9]))

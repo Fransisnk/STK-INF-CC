@@ -12,14 +12,14 @@ class Kmean(Database):
     def __init__(self):
         Database.__init__(self)
 
-        self.ytdf = pd.DataFrame(list(self.ytCollection2.find()))
-        self.ytdf.drop("Description", axis=1, inplace=True)
-        self.ytdf.drop("Duration", axis=1, inplace=True)
-        self.ytdf.drop("Title", axis=1, inplace=True)
-        self.ytdf.drop("_id", axis=1, inplace=True)
-        self.ytdf['ad'].replace('', np.nan, inplace=True)
-        self.ytdf.dropna(subset=['ad'], inplace=True)
-        self.ytdf = self.ytdf.set_index("Date")
+        cursor = self.ytCollection2.find()
+
+        df = pd.DataFrame(list(cursor), columns=["Date", "ad"])
+        df = df[df["ad"] == "1"]
+        df.set_index("Date", inplace=True)
+        df.index = pd.to_datetime(df.index, format="%Y-%m-%d")
+        df.sort_index(inplace=True)
+        self.ytdf = df
         self.ytdf['ad'] = self.ytdf['ad'].astype(np.int64)
 
     def learn(self, input, nclusters=8):
@@ -180,4 +180,5 @@ if __name__ == "__main__":
     c = Kmean()
     c.clusterDf()
     #c.dataSplit(nclusters=3, test=True)
-    c.plotter()
+    #c.plotter()
+    c.dataSplit(nclusters=3, test=True)

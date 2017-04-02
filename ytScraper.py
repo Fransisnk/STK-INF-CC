@@ -16,6 +16,7 @@ class YTScraper(Database):
         #self.campaign = self.campaign[self.campaign.ad !=0]
         #self.campaign.sort_index(inplace=True)
         #self.clusderDf()
+        cursor = self.ytCollection2.find()
 
         df = pd.DataFrame(list(cursor), columns=["Date", "ad"])
         df = df[df["ad"] == "1"]
@@ -150,4 +151,3 @@ if __name__ == "__main__":
     cursor = c.ytCollection2.find()
 
 
-    print(df)
