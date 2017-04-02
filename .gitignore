@@ -6,3 +6,4 @@
 /.idea
 /res
 /__pycache__
+*.pyc
