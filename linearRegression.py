@@ -5,24 +5,71 @@ import datetime
 import linRegModel
 from sklearn.neural_network import MLPClassifier
 
+
+def cutOutEmptyHours(data):
+    # split up dataframe into three lists
+    cutData = []
+    timeData = []
+    for line in data:
+        dateTimeItem = datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S')
+        if isCallDuringDaytime(dateTimeItem):# & isDay(dateTimeItem, 6):
+            timeData.append(dateTimeItem)
+            cutData.append(line)
+    timeDummyData = []
+    callData = []
+    for line in cutData:
+        timeDummyData.append(line['combinedDummy'])
+        callData.append(line['Offered_Calls'])
+    return (timeData, timeDummyData, callData)
+
+def isCallDuringDaytime(dtItem):
+    silentHourBeginning = datetime.time(hour=20, minute=30)
+    silentHourEnding = datetime.time(hour=7, minute=45)
+    if (dtItem.time() > silentHourBeginning) or (dtItem.time() < silentHourEnding):
+        return False
+    else:
+        return True
+
+def isDay(dtItem, day):
+    '''
+    takes datetime item, returns true if weekday equals integer of day, where 0 == monday, 1 == tuesday etc.
+    :param dtItem: datetime
+    :param day: int
+    :return: boolean
+    '''
+    if dtItem.weekday() == day:
+        return True
+    else:
+        return False
+
+def cutDataInParts(data, parts, boolean):
+    if boolean:
+        partOfData = int(len(data) / parts)
+        return data[-partOfData:]
+    else:
+        return data
+
 #reading data
 model = linRegModel.linRegModel()
 print('complete data size:', model.callCollection.count())
 finder = model.callCollection.find()
-print(len(finder[5]['combinedDummy']))
 data = model.reduceToType('Mobile Bestilling')
-print('size of data in lines (bestilling only):', len(data), 'linelength: ', len(data[5]['combinedDummy']))
-# -------------------------------> the array doesn't
+print('size of data of bestilling only: ', len(data))
 
-# split up dataframe into three lists
-timeData = []
-timeDummyData = []
-callData = []
-for line in data:
-    timeData.append(datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S'))
-    timeDummyData.append(line['combinedDummy'])
-    callData.append(line['Offered_Calls'])
 
+#only take the last two years of data
+
+data = cutDataInParts(data, 2, True)
+
+print('length of uncut data:', len(data))
+
+# cut out the empty hours --> this works
+cutData = cutOutEmptyHours(data)
+timeData = cutData[0]
+timeDummyData = cutData[1]
+callData = cutData[2]
+
+print('lengths of cut data: ', len(timeData), len(timeDummyData), len(callData))
 # splitting up 20% of data
 percentage = 20
 percentageOfData = int(len(timeDummyData) * percentage / 100)
@@ -38,7 +85,7 @@ regr = linear_model.LinearRegression()
 regr.fit(timeDummyData_train, calls_train)
 
 # training MLP
-clf = MLPClassifier(solver="adam", alpha=1e-5, hidden_layer_sizes=(30, 30), random_state=1, early_stopping=True)
+clf = MLPClassifier(solver="adam", alpha=1e-5, hidden_layer_sizes=(170, 120), random_state=1, early_stopping=True)
 clf.fit(timeDummyData_train, calls_train)
 
 # predicting LinReg and MLP
@@ -95,10 +142,10 @@ print('mean of linregMSE: ', np.mean(MSEResults[2]))
 print('mean of MLP MSE: ', np.mean(MSEResults[3]))
 
 plt.plot(timeData[-percentageOfData:], predictionLinReg, 'r-', label='prediction of LinReg', markevery=100, markersize=5)
-plt.plot(timeData[-percentageOfData:], predictionMLP, 'g-', label='mlpPrediction', markevery=100, markersize=3)
+#plt.plot(timeData[-percentageOfData:], predictionMLP, 'g-', label='mlpPrediction', markevery=100, markersize=3)
 plt.plot(timeData[-percentageOfData:], calls_test, 'b-', label='actual calls', markevery=100, markersize=3)
-plt.plot(timeData[-percentageOfData:], MSEResults[2], 'y-', label='LinReg delta', markevery=10000, markersize=5)
-plt.plot(timeData[-percentageOfData:], MSEResults[3], 'm-', label='MLP delta', markevery=10000, markersize=5)
+#plt.plot(timeData[-percentageOfData:], MSEResults[2], 'y-', label='LinReg delta', markevery=10000, markersize=5)
+#plt.plot(timeData[-percentageOfData:], MSEResults[3], 'm-', label='MLP delta', markevery=10000, markersize=5)
 plt.legend() # creates a legend
 # plt.ylim([0,250]) # limits the axis size
 plt.show()
