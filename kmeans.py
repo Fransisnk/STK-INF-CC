@@ -12,6 +12,16 @@ class Kmean(Database):
     def __init__(self):
         Database.__init__(self)
 
+        self.ytdf = pd.DataFrame(list(self.ytCollection2.find()))
+        self.ytdf.drop("Description", axis=1, inplace=True)
+        self.ytdf.drop("Duration", axis=1, inplace=True)
+        self.ytdf.drop("Title", axis=1, inplace=True)
+        self.ytdf.drop("_id", axis=1, inplace=True)
+        self.ytdf['ad'].replace('', np.nan, inplace=True)
+        self.ytdf.dropna(subset=['ad'], inplace=True)
+        self.ytdf = self.ytdf.set_index("Date")
+        self.ytdf['ad'] = self.ytdf['ad'].astype(np.int64)
+
     def learn(self, input, nclusters=8):
         kmeans = KMeans(n_clusters=nclusters, n_jobs=-1).fit(input)
 
@@ -24,7 +34,7 @@ class Kmean(Database):
     def clusterDf(self):
 
         path = "res/KS_Mobile_Calls.csv"
-        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=205500)
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'])
         self.cdf.drop('Program', axis=1, inplace=True)
         self.cdf.drop('Service', axis=1, inplace=True)
 
@@ -79,6 +89,8 @@ class Kmean(Database):
                 inertia.append(self.learn(ocalls, d)[0])
 
             plt.plot(range(1, 10), inertia)
+            plt.xlabel("n clusters")
+            plt.ylabel("inertia")
             plt.show()
 
         iner, labels = self.learn(ocalls, nclusters)
@@ -94,13 +106,14 @@ class Kmean(Database):
 
         sl = list(itertools.chain.from_iterable(clist))
         self.cdf["Cluster"] = sl
-        my_colors = ['g', 'b', 'r']
+        my_colors = ['g', 'b', 'r', "y", "m", "c"]
         for i, day in enumerate(self.cdf.groupby(pd.TimeGrouper(groupby))):
             df = day[1]
             bestillings = df.loc[df['Type'] == 'Mobile Bestilling']['Offered_Calls'].tolist()
             dates = df.loc[df['Type'] == 'Mobile Bestilling'].index.get_level_values(0).tolist()
             colors = df.loc[df['Type'] == 'Mobile Bestilling']['Cluster'].tolist()
-            plt.plot(dates, bestillings, c=my_colors[colors[1]])
+            plt.plot(dates, bestillings, c=my_colors[colors[1]], label="Cluster: {}".format(colors[1]))
+        plt.ylabel("ammount of calls")
         plt.xlabel('time')
         plt.show()
 
@@ -146,8 +159,25 @@ class Kmean(Database):
         plt.plot(dates2, predicted, "r")
         plt.show()
 
+    def addYttoPlt(self):
+        ytdates = []
+        for index, row in self.ytdf.iterrows():
+            if row["ad"] == 1:
+                ytdates.append(datetime.strptime(index, "%Y-%m-%d"))
+
+        for xc in ytdates:
+            plt.axvline(x=xc, color='k', linestyle='--')
+
+    def plotter(self):
+
+        self.cdf.loc[self.cdf['Type'] == 'Mobile Bestilling']["Offered_Calls"].plot()
+
+        self.addYttoPlt()
+
+        plt.show()
 
 if __name__ == "__main__":
     c = Kmean()
-    c.clusderDf()
-    c.dataprep()
+    c.clusterDf()
+    #c.dataSplit(nclusters=3, test=True)
+    c.plotter()
