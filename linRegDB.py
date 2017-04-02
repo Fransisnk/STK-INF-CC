@@ -15,11 +15,11 @@ class linRegDB():
         self.client = MongoClient()
         self.db = self.client.db
         self.callCollection = self.db.callData
-        # self.ytCollection = self.db.YTData
+        self.ytCollection = self.db.YTData
 
     def clusderDf(self, nrows=None):
         path = "res/KS_Mobile_Calls.csv"
-        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=nrows)
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=15000)
         self.cdf.drop('Program', axis=1, inplace=True)
         self.cdf.drop('Service', axis=1, inplace=True)
         self.cdf = self.cdf.groupby(level=[0, 1, 2])["Offered_Calls"].sum()

@@ -16,6 +16,7 @@ class Database():
         self.db = self.client.db
         self.callCollection = self.db.callData
         self.ytCollection = self.db.YTData
+        self.ytCollection2 = self.db.YTData2
 
     def clusderDf(self):
         """path = "res/KS_Mobile_Calls.csv"

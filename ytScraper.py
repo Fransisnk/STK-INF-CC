@@ -12,10 +12,18 @@ class YTScraper(Database):
         self.url = "http://www.youtube.com/user/{0}/videos".format(account)
         self.soup = ""
 
-        self.campaign = pd.read_csv("publicRes/yt.csv", usecols=["Date", "ad"], index_col=[0], parse_dates=["Date"])
-        self.campaign = self.campaign[self.campaign.ad !=0]
-        self.campaign.sort_index(inplace=True)
+        #self.campaign = pd.read_csv("publicRes/yt.csv", usecols=["Date", "ad"], index_col=[0], parse_dates=["Date"])
+        #self.campaign = self.campaign[self.campaign.ad !=0]
+        #self.campaign.sort_index(inplace=True)
         #self.clusderDf()
+
+        df = pd.DataFrame(list(cursor), columns=["Date", "ad"])
+        df = df[df["ad"] == "1"]
+        df.set_index("Date", inplace=True)
+        df.index = pd.to_datetime(df.index, format="%Y-%m-%d")
+        df.sort_index(inplace=True)
+
+        self.campaign = df
 
         # self.url = urlopen(self.url).read()
         # self.soup = bs(self.url, "html.parser")
@@ -23,7 +31,7 @@ class YTScraper(Database):
             self.souplocal = bs(html, "html.parser")
 
         # self.page = bs(dow)
-    def getDaysSince(self, df, lim=14):
+    def getDaysSince(self, df, lim=120):
         #if df == 0:
         #    df = self.cdf
         totdatelist = df.index.get_level_values(0)
@@ -123,12 +131,12 @@ class YTScraper(Database):
         :return:
         """
 
-        cursor = self.ytCollection.find()
+        cursor = self.ytCollection2.find()
         for line in cursor:
             print(line["Title"])
             print(line["Description"])
 
-            self.ytCollection.update({"_id": line["_id"]}, {"$set": {"ad": input()}})
+            self.ytCollection2.update({"_id": line["_id"]}, {"$set": {"ad": input()}})
             print("------------------------------------")
 
 
@@ -136,4 +144,10 @@ class YTScraper(Database):
 
 if __name__ == "__main__":
     c = YTScraper("TelenorNorway")
-    c.getDaysSince()
+    #links = c.getLinksFromLocal()
+    #metadata = c.getMetadata(links)
+    #c.ytCollection2.insert_many(metadata)
+    cursor = c.ytCollection2.find()
+
+
+    print(df)
