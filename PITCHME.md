@@ -5,7 +5,7 @@
 # Business idea:
 Tool for HR management
 
-We've been provided with a dataset of customer service calls from Telenor with the task of predicting the number of calls for the upcoming eight weeks. The aim is to better prepare the customer department for distributing manpower.
+We've been provided with a dataset of customer service calls from Telenor with the task of predicting the number of calls for the upcoming eight weeks. The aim is to better prepare the customer service department for better distributing manpower.
 
 We explored the possibilities of introducing external variables which are not commonly included in such analysis (i.e. weather data, the dates when advertisment campaigns are launched).
 
