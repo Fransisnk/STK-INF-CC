@@ -2,7 +2,8 @@
 <!-- color: #000 -->
 <!-- font: frutiger -->
 
-# Business idea:
+# Telenor Customer Service
+## Idea: predicting the incoming calls to a hotline
 Tool for HR management
 
 We've been provided with a dataset of customer service calls from Telenor with the task of predicting the number of calls for the upcoming eight weeks. The aim is to better prepare the customer service department for better distributing manpower.
