@@ -14,7 +14,7 @@ We explored the possibilities of introducing external variables which are not co
 ### Call Data
 * Make the data even spaced, fill the time points where no calls are recorded with 0
 
-* Removed calls received from 20:30 to 7:45 to 0, when no calls are generally expected. The reason for doing so is that on special occasions (i.e. system outage), the customer service centre receives large number of calls and extra need of manpower should be expected. Thus when fitting the model, we removed these calls to avoid their effect on the prediction on regular days.
+* Removed calls received from 20:30 to 7:45, when no calls are generally expected. The reason for doing so is that on special occasions (i.e. system outage), the customer service centre receives large number of calls and extra need of manpower should be expected. Thus when fitting the model, we removed these calls to avoid their effect on the prediction on regular days.
 
 ## Exploratory analysis
 
