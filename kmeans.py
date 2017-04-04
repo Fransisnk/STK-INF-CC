@@ -34,7 +34,7 @@ class Kmean(Database):
     def clusterDf(self):
 
         path = "res/KS_Mobile_Calls.csv"
-        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'])
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=150000)
         self.cdf.drop('Program', axis=1, inplace=True)
         self.cdf.drop('Service', axis=1, inplace=True)
 
@@ -163,7 +163,7 @@ class Kmean(Database):
         ytdates = []
         for index, row in self.ytdf.iterrows():
             if row["ad"] == 1:
-                ytdates.append(datetime.strptime(index, "%Y-%m-%d"))
+                ytdates.append(index)
 
         for xc in ytdates:
             plt.axvline(x=xc, color='k', linestyle='--')
@@ -179,6 +179,5 @@ class Kmean(Database):
 if __name__ == "__main__":
     c = Kmean()
     c.clusterDf()
-    #c.dataSplit(nclusters=3, test=True)
-    #c.plotter()
     c.dataSplit(nclusters=3, test=True)
+    #c.plotter()

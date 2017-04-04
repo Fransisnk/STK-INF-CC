@@ -6,7 +6,7 @@ import linRegModel
 from sklearn.neural_network import MLPClassifier
 
 
-def cutOutEmptyHours(data):
+def cutOutSilentHours(data):
     # split up dataframe into three lists
     cutData = []
     timeData = []
@@ -53,18 +53,16 @@ def cutDataInParts(data, parts, boolean):
 model = linRegModel.linRegModel()
 print('complete data size:', model.callCollection.count())
 finder = model.callCollection.find()
-data = model.reduceToType('Mobile Bestilling')
+data = model.reduceToType('Mobile Bestilling') # cuts data down to bestilling only
 print('size of data of bestilling only: ', len(data))
 
 
-#only take the last two years of data
-
-data = cutDataInParts(data, 2, True)
+data = cutDataInParts(data, 2, True) #only take the last two years of data
 
 print('length of uncut data:', len(data))
 
-# cut out the empty hours --> this works
-cutData = cutOutEmptyHours(data)
+# cut out the silent hours at night
+cutData = cutOutSilentHours(data)
 timeData = cutData[0]
 timeDummyData = cutData[1]
 callData = cutData[2]
@@ -142,7 +140,14 @@ print('Variance score: %.2f' % regr.score(timeDummyData_test, calls_test))
 print('mean of linregMSE: ', np.mean(MSEResults[2]))
 print('mean of MLP MSE: ', np.mean(MSEResults[3]))
 
-#plt.plot(timeData[-percentageOfData:], predictionLinReg, 'r-', label='prediction of LinReg', markevery=100, markersize=5)
+percentOfDeviation = []
+for index, item in enumerate(predictionMLP):
+    if item > (0.75 * calls_test[index]) and item < (1.25 * calls_test[index]):
+        print(item, 'vs ', calls_test[index])
+        percentOfDeviation.append(item)
+print('mean hit rate 25%: ', len(percentOfDeviation) / len(calls_test))
+
+plt.plot(timeData[-percentageOfData:], predictionLinReg, 'r-', label='prediction of LinReg', markevery=100, markersize=5)
 plt.plot(timeData[-percentageOfData:], predictionMLP, 'g-', label='mlpPrediction', markevery=100, markersize=3)
 plt.plot(timeData[-percentageOfData:], calls_test, 'b-', label='actual calls', markevery=100, markersize=3)
 #plt.plot(timeData[-percentageOfData:], MSEResults[2], 'y-', label='LinReg delta', markevery=10000, markersize=5)
