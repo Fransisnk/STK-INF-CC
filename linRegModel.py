@@ -2,6 +2,7 @@ from database import Database
 from pymongo import MongoClient
 import datetime
 import numpy as np
+import pandas as pd
 
 from linRegDB import linRegDB
 
@@ -45,6 +46,50 @@ class linRegModel(linRegDB):
             keyList.append(key)
         return(keyList)
 
+    def fullHours(self, type):
+        '''
+        returns the sum of incoming calls for one hour.
+        :param type: string
+        :param collection: mongoDB collection
+        :return: pandas dataframe
+        '''
+        data = self.reduceToType(type)
+        hourList = []
+        valueList = []
+        for index, line in enumerate(data):
+            time = datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S')
+            if time.minute == 00:
+                callSum = data[index]['Offered_Calls'] + data[index + 1]['Offered_Calls'] + data[index + 2]['Offered_Calls'] + data[index + 3]['Offered_Calls']
+                valueList.append(callSum)
+                hourList.append(time)
+        return pd.DataFrame({'hours': hourList, 'sumOfCalls': valueList})
+
+    def fullDays(self, type):
+        '''
+        returns the sum of incoming calls for one day.
+        :param type: string
+        :param collection: mongoDB collection
+        :return: pandas dataframe
+        '''
+        data = self.reduceToType(type)
+        dayList = []
+        valueList = []
+
+        dayBefore = datetime.datetime.strptime(data[0]['dateTimeStrings'], '%Y-%m-%d %H:%M:%S').date()
+        callSum = 0
+        dayList.append(dayBefore)
+        for index, line in enumerate(data):
+            actualDay = datetime.datetime.strptime(line['dateTimeStrings'], '%Y-%m-%d %H:%M:%S').date()
+            if actualDay == dayBefore:
+                callSum += data[index]['Offered_Calls']
+            else:
+                dayBefore = actualDay
+                valueList.append(callSum) # append previous day's sum
+                callSum = data[index]['Offered_Calls'] # start new sum with first entry of new day
+                dayList.append(actualDay)
+        valueList.append(callSum) # append last callSum-value
+        return pd.DataFrame({'days': dayList, 'sumOfCalls': valueList})
+
     def dummyArrayToDatetime(self, dummy):
         '''
         transforms a dummy array consisting of [0, ..., 1, 0] into a datetime object
@@ -77,8 +122,6 @@ class linRegModel(linRegDB):
 
 if __name__ == "__main__":
     linRegModel = linRegModel()
-
-
     # testing backtransformation from dummy array to datetime.time object
     # singleTestDummy = model.returnColumn('quarterlyHour', limit=1000)
     # for line in singleTestDummy:
