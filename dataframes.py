@@ -77,6 +77,12 @@ class CallCenter():
         return df[colname].resample(timedelta).apply(combiner)
 
     def addDummy(self, df):
+        """
+        Takes an pandas dataframe, and creates  "dummydata" for minute,hour,day etc. 
+        TODO: add weekdays, weekends etc. combine columns to one
+        :param df: pandas dataframe with timeseries index
+        :return: 
+        """
         arraylist = [df.index.minute, df.index.hour, df.index.day, df.index.month, df.index.year]
 
         for i, array in enumerate(arraylist):
