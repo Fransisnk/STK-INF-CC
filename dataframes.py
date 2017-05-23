@@ -5,10 +5,28 @@ import matplotlib.pyplot as plt
 from multiprocessing import Pool
 plt.style.use('ggplot')
 import time
+import numpy as np
 
 class CallCenter():
     def __init__(self):
         self.readCallCSV()
+        self.client = MongoClient()
+        self.db = self.client.db
+        self.callCollection = self.db.callData
+    def dfToDB(self, df = None, db = None):
+        """
+        Takes an pandas dataframe and adds the data to a given mongodb collection
+        :param df: pandas dataframe
+        :param db: mongoDB collection
+        :return:
+        """
+        if df == None:
+            df = self.cdf
+        if db == None:
+            db = self.callCollection
+
+
+
 
     def readCallCSV(self):
         self.readNcleanCSV()
@@ -83,23 +101,26 @@ class CallCenter():
         :param df: pandas dataframe with timeseries index
         :return: 
         """
-        arraylist = [df.index.minute, df.index.hour, df.index.day, df.index.month, df.index.year]
+        # dayofweek 0-6, quarter
+        arraylist = [df.index.minute, df.index.hour, df.index.day, df.index.dayofweek, df.index.month, df.index.quarter, df.index.year]
 
-        for i, array in enumerate(arraylist):
-            min = array.min()
-            max = array.max()
-            maxlen = len(bin(max-min)[2:])
+        datalist = [[] for x in range(len(arraylist[0]))]
 
-            #drops columns with only one unique element
-            if (min < max):
-                df["dummy{}".format(i)] = array
-                # bin(int(a) - min)[2:] -> converts to binary and removes 0b from the result
-                # zfill fills the result with 0's so that they are all the same len
-                # nested list coverts binary to a list of chars representing the numbers
-                # list(map(int, ... converts the elements in the list to int
-                df["dummy{}".format(i)] = df["dummy{}".format(i)].map(lambda a: list(map(int, list(bin(int(a) - min)[2:].zfill(maxlen)))))
+        for array in arraylist:
 
-        print(df)
+            uele =  np.unique(array)
+            if len(uele)>1:
+
+                def dum(a):
+                    zarray = np.zeros(len(uele), dtype=np.int)
+                    zarray.itemset(list(uele).index(a),1)
+                    return list(zarray)
+
+                for i, e in enumerate(array):
+                    datalist[i]+=dum(e)
+
+        df["dummydata"] = datalist
+        return df
 
 
 if __name__ == "__main__":
