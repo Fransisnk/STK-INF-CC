@@ -114,7 +114,7 @@ class CallCenter():
         """
         return df.loc[df['Type'] == type].resample(timeDelta).sum().between_time(startDay, endDay)
 
-    def groupToList(self, df, colname, timedelta="D"):
+    def groupToList(self, df, colname="Offered_Calls", timedelta="D"):
         """
         example groupToList(df, "Offered_Calls", timedelta="D")
         Takes a pandas dataframe and combines all events in colname to a list for that timedelta.

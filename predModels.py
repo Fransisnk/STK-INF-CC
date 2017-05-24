@@ -53,7 +53,9 @@ class Models(CallCenter):
         if plot:
             for i, e in enumerate(kmeans.cluster_centers_):
                 plt.plot(e, label=str(i))
-            plt.show()
+            #plt.show()
+            plt.savefig("static/kmeansavg.png")
+            plt.cla()
 
         my_colors = ['g', 'b', 'r', "y", "m", "c"]
         labels = kmeans.labels_
@@ -72,7 +74,8 @@ class Models(CallCenter):
         plt.title("Clustered calls")
         plt.xlabel("Date")
         plt.ylabel("Ammount of Calls")
-        plt.show()
+        #plt.show()
+        plt.savefig("static/kmeanstot.png")
 
 if __name__ =="__main__":
     c = Models()
