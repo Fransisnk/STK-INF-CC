@@ -11,13 +11,14 @@ import json
 class CallCenter():
     def __init__(self):
 
-        t0 = time.time()
-        self.readCallCSV()
-        print(time.time() - t0)
-
         self.client = MongoClient()
         self.db = self.client.db
         self.callCollection = self.db.callData
+
+        if self.callCollection.count() == 0:
+            self.readCallCSV()
+            self.dfToDB()
+
 
     def dfToDB(self, df = None, db = None):
         """
@@ -28,10 +29,10 @@ class CallCenter():
         """
         if df == None:
             df = self.cdf
+            df = df.loc[self.cdf['Type'] == "Mobile Bestilling"]
         if db == None:
             db = self.callCollection
 
-        df = df.loc[self.cdf['Type'] == "Mobile Bestilling"]
         db.remove()
         df.index = df.index.astype(str)
         df.reset_index(level=0, inplace=True)
@@ -51,6 +52,7 @@ class CallCenter():
         df = pd.DataFrame(list(db.find({},{ "_id" : 0 })))
         df.set_index("index",inplace=True)
         df.index = pd.to_datetime(df.index)
+        df.sort_index(inplace=True)
         return df
 
 
@@ -154,12 +156,8 @@ if __name__ == "__main__":
 
     c = CallCenter()
 
-
-    c.dfToDB()
-
-    t0 = time.time()
     df = c.dBtoDf()
-    print(time.time() - t0)
+
     #print(c.callCollection.find_one())
 
     #c.readCallCSV()
