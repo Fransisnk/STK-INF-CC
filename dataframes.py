@@ -19,6 +19,9 @@ class CallCenter():
             self.readCallCSV()
             self.dfToDB()
 
+        self.ytCollection = self.db.YTData
+        self.ytCollection2 = self.db.YTData2
+
 
     def dfToDB(self, df = None, db = None):
         """
@@ -98,19 +101,20 @@ class CallCenter():
         self.cdf.index = pd.DatetimeIndex(datelist)
         self.cdf.sort_index(inplace=True)
 
-    def binnedType(self, type='Mobile Bestilling', timeDelta="1H", startDay='8:00', endDay='18:00'):
+    def binnedType(self, df,  type='Mobile Bestilling', timeDelta="1H", startDay='8:00', endDay='18:00'):
         """
         example: binnedType('Mobile Bestilling', "1H", '8:00','18:00')
         Returns a pandas dataframe where time is binned together with givent interval and start/stop of day
+        :param df: pandas dataframe
         :param type: string Call type i.e Mobile Bestilling
         :param timeDelta: string bin size i.e. 1H 2H 1D
         :param startDay: string start of day time in HH:MM
         :param endDay: string end of day time in HH:MM
         :return: pandas dataframe idexed by datetime, with ammound of calls
         """
-        return self.cdf.loc[self.cdf['Type'] == type].resample(timeDelta).sum().between_time(startDay, endDay)
+        return df.loc[df['Type'] == type].resample(timeDelta).sum().between_time(startDay, endDay)
 
-    def groupToList(self, df, colname, timedelta="D"):
+    def groupToList(self, df, colname="Offered_Calls", timedelta="D"):
         """
         example groupToList(df, "Offered_Calls", timedelta="D")
         Takes a pandas dataframe and combines all events in colname to a list for that timedelta.
