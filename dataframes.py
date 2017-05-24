@@ -6,13 +6,19 @@ from multiprocessing import Pool
 plt.style.use('ggplot')
 import time
 import numpy as np
+import json
 
 class CallCenter():
     def __init__(self):
+
+        t0 = time.time()
         self.readCallCSV()
+        print(time.time() - t0)
+
         self.client = MongoClient()
         self.db = self.client.db
         self.callCollection = self.db.callData
+
     def dfToDB(self, df = None, db = None):
         """
         Takes an pandas dataframe and adds the data to a given mongodb collection
@@ -25,6 +31,27 @@ class CallCenter():
         if db == None:
             db = self.callCollection
 
+        df = df.loc[self.cdf['Type'] == "Mobile Bestilling"]
+        db.remove()
+        df.index = df.index.astype(str)
+        df.reset_index(level=0, inplace=True)
+
+        db.insert(json.loads(df.T.to_json()).values())
+
+
+    def dBtoDf (self, db=None):
+        """
+        reads mongodb collection to a pandas dataframe and returns the df.
+        :param db: mongodb collection
+        :return: pandas dataframe
+        """
+        if db==None:
+            db = self.callCollection
+
+        df = pd.DataFrame(list(db.find({},{ "_id" : 0 })))
+        df.set_index("index",inplace=True)
+        df.index = pd.to_datetime(df.index)
+        return df
 
 
 
@@ -37,7 +64,7 @@ class CallCenter():
         Removes unused columns and, sums calls for multiple of same types.
         """
         path = "res/KS_Mobile_Calls.csv"
-        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'], nrows=6000)
+        self.cdf = pd.read_csv(path, delimiter=";", index_col=[0, 1, 4], parse_dates=['Call_Date'])
         self.cdf.drop('Program', axis=1, inplace=True)
         self.cdf.drop('Service', axis=1, inplace=True)
 
@@ -124,8 +151,18 @@ class CallCenter():
 
 
 if __name__ == "__main__":
+
     c = CallCenter()
-    c.readCallCSV()
-    binnedB = c.binnedType('Mobile Bestilling', "1H", '8:00','18:00')
+
+
+    c.dfToDB()
+
+    t0 = time.time()
+    df = c.dBtoDf()
+    print(time.time() - t0)
+    #print(c.callCollection.find_one())
+
+    #c.readCallCSV()
+    #binnedB = c.binnedType('Mobile Bestilling', "1H", '8:00','18:00')
     #dydf = c.groupToList(binnedB, "Offered_Calls")
-    c.addDummy(binnedB)
+    #c.addDummy(binnedB)
