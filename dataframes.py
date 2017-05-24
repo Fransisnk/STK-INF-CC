@@ -19,6 +19,9 @@ class CallCenter():
             self.readCallCSV()
             self.dfToDB()
 
+        self.ytCollection = self.db.YTData
+        self.ytCollection2 = self.db.YTData2
+
 
     def dfToDB(self, df = None, db = None):
         """
