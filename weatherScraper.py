@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import urllib2 as u
+import urllib.request as u
 import re
 from datetime import datetime, timedelta
 
@@ -133,12 +133,13 @@ class WScraper():
 
 if __name__ == "__main__":
 
-    date = datetime(2015,10,02)
-    #df_past = getPastWeather(date)
+    date = datetime(2015,10,0o02)
+    #df_past = c.getPastWeather(date)
     #print(df_past.head(n=10))
     c = WScraper()
-    #df = c.getPastWeather(date).head(n=10)
-    #print(c.stripUnit(df, "Wind Mean"))
 
-    df_future = c.getFutureWeather()
-    print(df_future.head(n=100))
+    df = c.getPastWeather(date).head(n=10)
+    print(c.stripUnit(df, "Wind Mean"))
+
+    #df_future = c.getFutureWeather()
+    #print(df_future.head(n=100))
