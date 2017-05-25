@@ -24,6 +24,14 @@ class CallCenter():
         self.ytCollection = self.db.YTData
         self.ytCollection2 = self.db.YTData2
 
+        # creates a new collection with dates only
+        startDateTime = datetime(year=2013, month=1, day=1)
+        endDateTime = datetime(year=2018, month=12, day=30)
+        self.dateCollection = self.db.date
+        if self.dateCollection.count() == 0:
+            self.dfToDB(df=self.addDummy(self.createDateDF(startDateTime, endDateTime)))
+
+
 
     def dfToDB(self, df = None, db = None):
         """
@@ -167,7 +175,10 @@ class CallCenter():
         dataframe = pd.Series(index=dateList) \
             .resample("15T") \
             .to_frame()
-        return (self.addDummy(dataframe))
+        return (dataframe)
+
+    def concatDFs(self, callDF, datesAndDummyDF):
+        return(pd.concat([self.binnedType(df=callDF), datesAndDummyDF], axis=1, join_axes=callDF.index()))
 
 
 if __name__ == "__main__":
@@ -176,9 +187,8 @@ if __name__ == "__main__":
 
     df = c.dBtoDf()
 
-    startDateTime = datetime(year=2013, month=1, day=1)
-    endDateTime = datetime(year=2013, month=3, day=1)
-    print(c.createDateDF(startDateTime, endDateTime))
+
+
 
     #print(c.callCollection.find_one())
 

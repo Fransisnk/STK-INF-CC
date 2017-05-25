@@ -14,15 +14,10 @@ class Training():
         data = self.dataframe.addDummy(data)
 
 
-
-
         self.readAndPrepareData(data, trainingDays=100, testDays=10)
 
+        actualDF = self.dataframe.concatDFs(self.dataframe.dBtoDf(db=self.dataframe.callCollection), self.dataframe.dateCollection)
 
-
-
-
-    def actualDF(self, datesOnlyDF):
 
 
     def readAndPrepareData(self, dataframe, trainingDays=365, testDays=14):
