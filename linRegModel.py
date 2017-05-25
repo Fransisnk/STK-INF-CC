@@ -10,10 +10,6 @@ from linRegDB import linRegDB
 class linRegModel(linRegDB):
     def __init__(self):
         linRegDB.__init__(self)
-        #self.clusderDf()
-        #self.csvToDB(self.db.callcollection, self.cdf)
-        #shift this to database.py:
-        #self.updateCallCollection()
 
     def returnColumn(self, columnName, limit=None):
         '''
@@ -122,24 +118,4 @@ class linRegModel(linRegDB):
 
 if __name__ == "__main__":
     linRegModel = linRegModel()
-    # testing backtransformation from dummy array to datetime.time object
-    # singleTestDummy = model.returnColumn('quarterlyHour', limit=1000)
-    # for line in singleTestDummy:
-    #     print(model.dummyToQuarterlyHour(line))
-
-    # combinedTestDummy = model.returnColumn('combinedDummy')
-    # print(len(combinedTestDummy))
-    # print(combinedTestDummy)
-    # reducedList = model.reduceColumnToType('Mobile Bestilling', 'combinedDummy')
-    # print(len(reducedList))
-    # print(reducedList)
-
-    # returns all columns contained in matrix
-    #print(linRegModel.returnAllColumnNames(linRegModel.callCollection))
-    #print(model.returnCombinedColumn(columnList))
-
-    # returns all rows for type "Bestilling"
-    #print(model.returnColumnForType('Offered_Calls', 'Mobile Bestilling'))
-
-
 
