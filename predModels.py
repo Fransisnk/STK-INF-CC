@@ -1,7 +1,15 @@
 from dataframes import CallCenter
+
 from sklearn.cluster import KMeans
+from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
+
 import matplotlib.pyplot as plt
 import pandas as pd
+
+from sklearn.externals import joblib
 
 class Models(CallCenter):
     def __init__(self):
@@ -77,9 +85,54 @@ class Models(CallCenter):
         #plt.show()
         plt.savefig("static/kmeanstot.png")
 
+    def neuralN(self,data):
+        """
+        Trains a mlp-network on the dummydata-column as input and "Offered-Calls" as output.
+        Picles the classifier for future use.
+        :param data: pandas dataframe with "dummydata" and "Offered_Calls"
+        :return: sklearn classifier
+        """
+
+        X = data["dummydata"].tolist()
+        y = data["Offered_Calls"].tolist()
+
+        clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(40, 30, 20), random_state=1)
+
+        clf.fit(X,y)
+
+        joblib.dump(clf, 'mlp.pkl')
+        return clf
+
+    def predict(self, data):
+        """
+        uses the "dummydata"-column to predict ammount of calls. Tries to load a pickeled clf, if fails runs standard
+        MLP-training on default dataset.
+        :param data: pandas dataframe with "dummydata" column
+        :return: data with a new column predictions with the predictions.
+        """
+        try:
+            clf = joblib.load("mlp.pkl")
+        except:
+            #Dummy must be added
+            clf = self.neuralN(self.binnedType(c.dBtoDf(), timeDelta="2H"))
+
+        data["predictions"] = clf.predict(data["dummydata"].tolist())
+
+        return data
+
+    def webPrediction(self, startday, endday):
+
+        predictData = self.createDateDF(startday, endday)
+        predictedData = self.predict(predictData)
+
+        predictedData.plot(x="Date", y="Ammount of calls", kind="bar", label="Predicted calls")
+        plt.savefig("static/predicted.png")
+        plt.cla()
+
 if __name__ =="__main__":
     c = Models()
     data = c.binnedType(c.dBtoDf(), timeDelta="2H")
-    daydata = c.groupToList(data, "Offered_Calls", timedelta="W")
+    #daydata = c.groupToList(data, "Offered_Calls", timedelta="W")
     #c.kmeansElbow(daydata.tolist(), 8)
-    c.kmeans(data, daydata.tolist(), 3, False)
+    #c.kmeans(data, daydata.tolist(), 3, False)
+    data = c.addDummy(data)
