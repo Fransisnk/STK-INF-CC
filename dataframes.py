@@ -1,6 +1,7 @@
 from pymongo import MongoClient
 import pandas as pd
 from datetime import datetime
+from datetime import timedelta
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
 plt.style.use('ggplot')
@@ -14,6 +15,7 @@ class CallCenter():
         self.client = MongoClient()
         self.db = self.client.db
         self.callCollection = self.db.callData
+        #self.callCollection.remove() # remove after use
 
         if self.callCollection.count() == 0:
             self.readCallCSV()
@@ -155,12 +157,28 @@ class CallCenter():
         df["dummydata"] = datalist
         return df
 
+    def createDateDF(self, startDateTime, endDateTime):
+        '''
+        takes a datetime object and creates a dataframe from the 01.01.2013 to the datetime date and indexes the time column
+        :param endDateTime: datetime.datetime
+        :return: pandas Dataframe
+        '''
+        dateList = pd.date_range(start=startDateTime, end=endDateTime)
+        dataframe = pd.Series(index=dateList) \
+            .resample("15T") \
+            .to_frame()
+        return (self.addDummy(dataframe))
+
 
 if __name__ == "__main__":
 
     c = CallCenter()
 
     df = c.dBtoDf()
+
+    startDateTime = datetime(year=2013, month=1, day=1)
+    endDateTime = datetime(year=2013, month=3, day=1)
+    print(c.createDateDF(startDateTime, endDateTime))
 
     #print(c.callCollection.find_one())
 
