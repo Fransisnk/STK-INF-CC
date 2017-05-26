@@ -14,38 +14,36 @@ class CallCenter():
 
         self.client = MongoClient()
         self.db = self.client.db
+
         self.callCollection = self.db.callData
+        self.dateCollection = self.db.date
+
         #self.callCollection.remove() # remove after use
+        #self.dateCollection.remove()
 
         if self.callCollection.count() == 0:
             self.readCallCSV()
-            self.dfToDB()
+            self.dfToDB(self.cdf.loc[self.cdf['Type'] == "Mobile Bestilling"], self.callCollection)
 
-        self.ytCollection = self.db.YTData
+        #self.ytCollection = self.db.YTData
         self.ytCollection2 = self.db.YTData2
 
-        # creates a new collection with dates only
-        startDateTime = datetime(year=2013, month=1, day=1)
-        endDateTime = datetime(year=2018, month=12, day=30)
-        self.dateCollection = self.db.date
         if self.dateCollection.count() == 0:
-            self.dfToDB(df=self.addDummy(self.createDateDF(startDateTime, endDateTime)))
+            startDateTime = datetime(year=2013, month=1, day=1)
+            endDateTime = datetime(year=2018, month=1, day=1)
+            df = self.createDateDF(startDateTime, endDateTime).resample("H").mean().between_time("8:00", "18:00")
+            df = self.addDummy(df)
+            self.dfToDB(df, self.dateCollection)
 
 
 
-    def dfToDB(self, df = None, db = None):
+    def dfToDB(self, df, db):
         """
         Takes an pandas dataframe and adds the data to a given mongodb collection
         :param df: pandas dataframe
         :param db: mongoDB collection
         :return:
         """
-        if df == None:
-            df = self.cdf
-            df = df.loc[self.cdf['Type'] == "Mobile Bestilling"]
-        if db == None:
-            db = self.callCollection
-
         db.remove()
         df.index = df.index.astype(str)
         df.reset_index(level=0, inplace=True)
@@ -145,6 +143,11 @@ class CallCenter():
         :return: 
         """
         # dayofweek 0-6, quarter
+
+
+        #IS SLOW
+
+
         arraylist = [df.index.minute, df.index.hour, df.index.day, df.index.dayofweek, df.index.month, df.index.quarter, df.index.year]
 
         datalist = [[] for x in range(len(arraylist[0]))]
@@ -171,24 +174,19 @@ class CallCenter():
         :param endDateTime: datetime.datetime
         :return: pandas Dataframe
         '''
-        dateList = pd.date_range(start=startDateTime, end=endDateTime)
-        dataframe = pd.Series(index=dateList) \
-            .resample("15T") \
-            .to_frame()
+        dateList = pd.date_range(start=startDateTime, end=endDateTime, freq="H")
+        dataframe = pd.Series(index=dateList).to_frame()
         return (dataframe)
 
     def concatDFs(self, callDF, datesAndDummyDF):
-        return(pd.concat([self.binnedType(df=callDF), datesAndDummyDF], axis=1, join_axes=callDF.index()))
+        return(pd.concat([callDF, datesAndDummyDF], axis=1, join_axes=[callDF.index()]))
 
 
 if __name__ == "__main__":
 
     c = CallCenter()
 
-    df = c.dBtoDf()
-
-
-
+    c.dateCollection.find_one()
 
     #print(c.callCollection.find_one())
 

@@ -36,7 +36,6 @@ def index():
 
 @app.route("/kmeans")
 def kmeans():
-
     return render_template("kmeans.html")
 
 
@@ -61,8 +60,10 @@ def predictions():
 
         startdate = pd.to_datetime(form.startdate.data.strftime('%Y-%m-%d'))
         enddate = pd.to_datetime(form.enddate.data.strftime('%Y-%m-%d'))
-
-        models.webPrediction(startdate, enddate)
+        print(startdate)
+        print(enddate)
+        #models.webPrediction(startdate, enddate)
+        return
 
     return render_template('predictions.html', form=form)
 

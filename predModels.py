@@ -96,7 +96,8 @@ class Models(CallCenter):
         X = data["dummydata"].tolist()
         y = data["Offered_Calls"].tolist()
 
-        clf = MLPClassifier(solver='lbfgs', alpha=1e-5, hidden_layer_sizes=(40, 30, 20), random_state=1)
+        clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150, 123), random_state=1,
+                            early_stopping=False)
 
         clf.fit(X,y)
 
@@ -113,8 +114,11 @@ class Models(CallCenter):
         try:
             clf = joblib.load("mlp.pkl")
         except:
-            #Dummy must be added
-            clf = self.neuralN(self.binnedType(c.dBtoDf(), timeDelta="2H"))
+
+            tdata = self.binnedType(self.dBtoDf(), timeDelta="2H")
+            tdata = self.concatDFs(tdata, self.dBtoDf(self.dateCollection))
+            print(tdata.head)
+            clf = self.neuralN(tdata)
 
         data["predictions"] = clf.predict(data["dummydata"].tolist())
 
@@ -122,7 +126,10 @@ class Models(CallCenter):
 
     def webPrediction(self, startday, endday):
 
+        print("oyooo")
         predictData = self.createDateDF(startday, endday)
+        predictData = self.concatDFs(predictData, self.dBtoDf(self.dateCollection))
+
         predictedData = self.predict(predictData)
 
         predictedData.plot(x="Date", y="Ammount of calls", kind="bar", label="Predicted calls")
@@ -131,8 +138,3 @@ class Models(CallCenter):
 
 if __name__ =="__main__":
     c = Models()
-    data = c.binnedType(c.dBtoDf(), timeDelta="2H")
-    #daydata = c.groupToList(data, "Offered_Calls", timedelta="W")
-    #c.kmeansElbow(daydata.tolist(), 8)
-    #c.kmeans(data, daydata.tolist(), 3, False)
-    data = c.addDummy(data)
