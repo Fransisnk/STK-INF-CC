@@ -14,9 +14,9 @@ class Training():
         data = self.dataframe.addDummy(data)
 
 
-        self.readAndPrepareData(data, trainingDays=100, testDays=10)
+        self.readAndPrepareData(data, trainingDays=100, testDays=20)
 
-        actualDF = self.dataframe.concatDFs(self.dataframe.dBtoDf(db=self.dataframe.callCollection), self.dataframe.dateCollection)
+        actualDF = self.dataframe.concatDFs(self.dataframe.dBtoDf(db=self.dataframe.callCollection), self.dataframe.dBtoDf(self.dataframe.dateCollection)) #kinda doesn't work yet
 
 
 
@@ -91,13 +91,12 @@ class Training():
         testFromThisDateOn = timeData.index(testFromThisDateOn)
 
         zeroList = [0] * len(predictionMLP) # make a list of zeros for indenting the ground line later on
-        plt.plot(timeData[testFromThisDateOn:], predictionLinReg, 'r-', label='prediction of LinReg', markevery=100,
-                 markersize=5)
-        plt.plot(timeData[testFromThisDateOn:], predictionMLP, 'g-', label='mlpPrediction', markevery=100, markersize=3)
-        plt.plot(timeData[testFromThisDateOn:], zeroList, 'k-', markersize= 5) # add black baseline to make more clear
-        plt.plot(timeData[testFromThisDateOn:], calls_test, 'b-', label='actual calls', markevery=100, markersize=3)
-        plt.plot(timeData[testFromThisDateOn:], linRegDeltas, 'y-', label='LinReg delta', markevery=10000, markersize=5)
-        plt.plot(timeData[testFromThisDateOn:], MLPDeltas, 'm-', label='MLP delta', markevery=10000, markersize=5)
+        #plt.plot(timeData[testFromThisDateOn:], predictionLinReg, 'r-', label='prediction of LinReg', linewidth=2)
+        plt.plot(timeData[testFromThisDateOn:], predictionMLP, 'g-', label='mlpPrediction', linewidth=2, alpha=0.9)
+        plt.plot(timeData[testFromThisDateOn:], zeroList, 'k-') # add black baseline to make more clear
+        plt.plot(timeData[testFromThisDateOn:], calls_test, 'k-', label='actual calls', alpha=0.7)
+        #plt.plot(timeData[testFromThisDateOn:], linRegDeltas, 'y-', label='LinReg delta')
+        #plt.plot(timeData[testFromThisDateOn:], MLPDeltas, 'm-', label='MLP delta')
         plt.legend()  # creates a legend
         # plt.ylim([0,250]) # limits the axis size
         plt.show()
