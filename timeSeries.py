@@ -206,6 +206,7 @@ print(residuals.describe())
 # sarimax_res = evaluate_PDQs(bestillingSeries.values, S, S, S, s_values, arima_res[0])
 
 # --- Prediction of last two weeks with SARIMAX ---
+# TODO: conform splitting of training and testing data to what we have in linearRegression.py in readAndPrepareData()
 # train, test = monthly_mean[:-2], monthly_mean[-2:]
 size = int(len(bestillingSeries) * 0.66)
 train, test = bestillingSeries[0:size], bestillingSeries[size:len(bestillingSeries)]
