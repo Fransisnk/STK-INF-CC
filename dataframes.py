@@ -179,14 +179,15 @@ class CallCenter():
         return (dataframe)
 
     def concatDFs(self, callDF, datesAndDummyDF):
-        return(pd.concat([callDF, datesAndDummyDF], axis=1, join_axes=[callDF.index()]))
+        return(pd.concat([callDF, datesAndDummyDF], axis=1, join_axes=[callDF.index]))
 
 
 if __name__ == "__main__":
 
     c = CallCenter()
 
-    c.dateCollection.find_one()
+    print(c.dateCollection.find_one())
+    print(c.callCollection.find_one())
 
     #print(c.callCollection.find_one())
 

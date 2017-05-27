@@ -2,10 +2,7 @@ from dataframes import CallCenter
 
 from sklearn.cluster import KMeans
 from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-
+from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -96,8 +93,8 @@ class Models(CallCenter):
         X = data["dummydata"].tolist()
         y = data["Offered_Calls"].tolist()
 
-        clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150, 123), random_state=1,
-                            early_stopping=False)
+        clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120,110,100,90), random_state=1,
+                            early_stopping=True)
 
         clf.fit(X,y)
 
@@ -138,3 +135,19 @@ class Models(CallCenter):
 
 if __name__ =="__main__":
     c = Models()
+    tdata = c.dBtoDf(c.callCollection)
+    tdata = c.binnedType(tdata)
+    ddata = c.dBtoDf(c.dateCollection)
+    tdata = c.concatDFs(tdata, ddata)
+    c.neuralN(tdata)
+    startDateTime = datetime(year=2016, month=1, day=1)
+    endDateTime = datetime(year=2016, month=2, day=1)
+
+    testset = c.createDateDF(startDateTime, endDateTime)
+    testset = testset.resample("H").mean().between_time("8:00", "18:00")
+    testset = c.concatDFs(testset, ddata)
+    testset = c.predict(testset)
+
+    testset["predictions"].plot(kind="bar")
+    plt.show()
+
