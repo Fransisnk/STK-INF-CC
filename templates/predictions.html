@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Predctions</title>
+</head>
+<body>
+<p>Predict calls between:</p>
+    <form action="/predictresults" method="post">
+        {{ form.startdate(class='datepicker') }}
+        {{ form.hidden_tag() }}
+        {{ form.enddate(class='datepicker') }}
+        {{ form.hidden_tag() }}
+        <input type="submit"/>
+    </form>
+
+</body>
+</html>

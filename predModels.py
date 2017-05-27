@@ -1,7 +1,12 @@
 from dataframes import CallCenter
+
 from sklearn.cluster import KMeans
+from sklearn.neural_network import MLPClassifier
+from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
+
+from sklearn.externals import joblib
 
 class Models(CallCenter):
     def __init__(self):
@@ -77,9 +82,72 @@ class Models(CallCenter):
         #plt.show()
         plt.savefig("static/kmeanstot.png")
 
+    def neuralN(self,data):
+        """
+        Trains a mlp-network on the dummydata-column as input and "Offered-Calls" as output.
+        Picles the classifier for future use.
+        :param data: pandas dataframe with "dummydata" and "Offered_Calls"
+        :return: sklearn classifier
+        """
+
+        X = data["dummydata"].tolist()
+        y = data["Offered_Calls"].tolist()
+
+        clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120,110,100,90), random_state=1,
+                            early_stopping=True)
+
+        clf.fit(X,y)
+
+        joblib.dump(clf, 'mlp.pkl')
+        return clf
+
+    def predict(self, data):
+        """
+        uses the "dummydata"-column to predict ammount of calls. Tries to load a pickeled clf, if fails runs standard
+        MLP-training on default dataset.
+        :param data: pandas dataframe with "dummydata" column
+        :return: data with a new column predictions with the predictions.
+        """
+        try:
+            clf = joblib.load("mlp.pkl")
+        except:
+
+            tdata = self.binnedType(self.dBtoDf(), timeDelta="2H")
+            tdata = self.concatDFs(tdata, self.dBtoDf(self.dateCollection))
+            print(tdata.head)
+            clf = self.neuralN(tdata)
+
+        data["predictions"] = clf.predict(data["dummydata"].tolist())
+
+        return data
+
+    def webPrediction(self, startday, endday):
+
+        print("oyooo")
+        predictData = self.createDateDF(startday, endday)
+        predictData = self.concatDFs(predictData, self.dBtoDf(self.dateCollection))
+
+        predictedData = self.predict(predictData)
+
+        predictedData.plot(x="Date", y="Ammount of calls", kind="bar", label="Predicted calls")
+        plt.savefig("static/predicted.png")
+        plt.cla()
+
 if __name__ =="__main__":
     c = Models()
-    data = c.binnedType(c.dBtoDf(), timeDelta="2H")
-    daydata = c.groupToList(data, "Offered_Calls", timedelta="W")
-    #c.kmeansElbow(daydata.tolist(), 8)
-    c.kmeans(data, daydata.tolist(), 3, False)
+    tdata = c.dBtoDf(c.callCollection)
+    tdata = c.binnedType(tdata)
+    ddata = c.dBtoDf(c.dateCollection)
+    tdata = c.concatDFs(tdata, ddata)
+    c.neuralN(tdata)
+    startDateTime = datetime(year=2016, month=1, day=1)
+    endDateTime = datetime(year=2016, month=2, day=1)
+
+    testset = c.createDateDF(startDateTime, endDateTime)
+    testset = testset.resample("H").mean().between_time("8:00", "18:00")
+    testset = c.concatDFs(testset, ddata)
+    testset = c.predict(testset)
+
+    testset["predictions"].plot(kind="bar")
+    plt.show()
+
