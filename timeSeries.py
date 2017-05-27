@@ -108,21 +108,7 @@ pyplot.show()
 # print("Type of w_stationary: ", type(w_stationary), w_stationary[:10])
 
 
-# --- SARIMAX: how the best model looks like ---
-smodel = sx.SARIMAX(bestillingSeries, exog=None, order=(7,1,0), seasonal_order=(1,1,1,7), trend='t')
-smodel_fit = smodel.fit(disp=0)
-yhat = smodel_fit.fittedvalues
-print(smodel_fit.summary())
-# plot residual errors
-residuals = DataFrame(smodel_fit.resid)
-residuals.plot()
-pyplot.suptitle('Residuals for SARIMAX(1,1,0,7)')
-pyplot.show()
-residuals.plot(kind='kde')
-pyplot.suptitle('Residuals for SARIMAX(1,1,0,7)')
-pyplot.show()
-print(residuals.describe())
-
+# NEW APPROACH
 
 # # --- GRID SEARCH ---
 # # evaluate an ARIMA model for a given order (p,d,q)
@@ -205,6 +191,22 @@ print(residuals.describe())
 # arima_res = evaluate_pdq(bestillingSeries.values, p_values, d_values, q_values)
 # sarimax_res = evaluate_PDQs(bestillingSeries.values, S, S, S, s_values, arima_res[0])
 
+# --- SARIMAX: how the best model looks like ---
+smodel = sx.SARIMAX(bestillingSeries, exog=None, order=(7,1,0), seasonal_order=(1,1,1,7), trend='t')
+smodel_fit = smodel.fit(disp=0)
+yhat = smodel_fit.fittedvalues
+print(smodel_fit.summary())
+# plot residual errors
+residuals = DataFrame(smodel_fit.resid)
+residuals.plot()
+pyplot.suptitle('Residuals for SARIMAX(1,1,0,7)')
+pyplot.show()
+residuals.plot(kind='kde')
+pyplot.suptitle('Residuals for SARIMAX(1,1,0,7)')
+pyplot.show()
+print(residuals.describe())
+# This works
+
 # --- Prediction of last two weeks with SARIMAX ---
 # TODO: conform splitting of training and testing data to what we have in linearRegression.py in readAndPrepareData()
 # train, test = monthly_mean[:-2], monthly_mean[-2:]
@@ -227,3 +229,6 @@ print('Test MSE: %.3f' % error)
 pyplot.plot(test, 'k-', label='actual calls', alpha=0.7)
 pyplot.plot(predictions, color='red', label='time series prediction', linewidth=2, alpha=0.9)
 pyplot.show()
+
+# This doesn't work
+# TODO: figure out why it's running forever and doesn't get to showing the plots
