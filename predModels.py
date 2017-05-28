@@ -135,6 +135,7 @@ class Models(CallCenter):
         predictedData["predictions"].plot(kind="bar", label="Predicted calls")
         plt.xlabel("Time")
         plt.ylabel("Predicted Calls")
+        plt.locator_params(nbins=len(np.unique(predictData.index.day))+1)
         plt.savefig("static/predicted.png", bbox_inches='tight')
         plt.cla()
 
@@ -182,19 +183,13 @@ class Models(CallCenter):
 
             clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120,100,100), random_state=1,
                                 early_stopping=True)
-            #tmax = data.index.max()
-            #tsplit = tmax - timedelta(days=700)
-            #clf.fit(data["dummydata"][tsplit:].tolist(), data["Offered_Calls"][tsplit:].tolist())
+
             clf.fit(data["dummydata"].tolist(), data["Offered_Calls"].tolist())
             joblib.dump(clf, 'mlp_ts.pkl')
 
         #Add timeseries to weekdf
         weekdf["Predicted w Timeseries"] = clf.predict(weekdf["dummydata"].tolist())
 
-        #weekdf.plot()
-        #weekdf["Predicted w/o Timeseries"].plot()
-        #plt.show()
-        #plt.cla()
 
         return weekdf
 
@@ -209,7 +204,6 @@ class Models(CallCenter):
 
         df1 = res.fittedvalues
         df2 = res.predict(len(ts), len(ts) + day)
-        d = df1.add(df2, fill_value=0)
         return df1, df2
 
     def webPredictNextWeek(self, data):
@@ -219,6 +213,7 @@ class Models(CallCenter):
         result["Predicted w Timeseries"].plot()#.bar()#(kind="bar")
         plt.ylabel("Ammount of calls")
         plt.xlabel("Date")
+        plt.locator_params(nbins=10)
         plt.savefig("static/weekpredicted.png", bbox_inches='tight')
         plt.cla()
 
@@ -239,7 +234,7 @@ if __name__ =="__main__":
     actual = tdata[splitdate:]
 
     findf = c.concatDFs(predicteddf, actual)
-    findf = findf.resample('1H').replace(np.nan, 0)
+    findf = findf.resample('1H').mean().replace(np.nan, 0)
 
     findf.plot()
     #predicteddf.plot()

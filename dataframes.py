@@ -137,8 +137,8 @@ class CallCenter():
 
     def addDummy(self, df):
         """
-        Takes an pandas dataframe, and creates  "dummydata" for minute,hour,day etc. 
-        TODO: add weekdays, weekends etc. combine columns to one
+        Takes an pandas dataframe, and creates  "dummydata" for minute,hour,day etc. removes columns with no change
+        TODO: add weekends etc.
         :param df: pandas dataframe with timeseries index
         :return: 
         """

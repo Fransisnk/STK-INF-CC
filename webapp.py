@@ -79,7 +79,6 @@ def predictresults():
 @app.route("/prednextweek", methods=["GET", "POST"])
 def prednextweek():
     tdata = models.dBtoDf(models.callCollection)
-    print(tdata.tail())
     tdata = models.binnedType(tdata)
     ddata = models.dBtoDf(models.dateCollection)
     tdata = models.concatDFs(tdata, ddata)
