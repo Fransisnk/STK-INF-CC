@@ -1,5 +1,5 @@
 from dataframes import CallCenter
-
+from datetime import timedelta
 from sklearn.cluster import KMeans
 from sklearn.neural_network import MLPClassifier
 from datetime import datetime
@@ -93,8 +93,8 @@ class Models(CallCenter):
         X = data["dummydata"].tolist()
         y = data["Offered_Calls"].tolist()
 
-        clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120,110,100,90), random_state=1,
-                            early_stopping=True)
+        clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120), random_state=1,
+                            early_stopping=False)
 
         clf.fit(X,y)
 
@@ -112,10 +112,11 @@ class Models(CallCenter):
             clf = joblib.load("mlp.pkl")
         except:
 
-            tdata = self.binnedType(self.dBtoDf(), timeDelta="2H")
+            tdata = self.binnedType(self.dBtoDf(), timeDelta="1H")
             tdata = self.concatDFs(tdata, self.dBtoDf(self.dateCollection))
-            print(tdata.head)
-            clf = self.neuralN(tdata)
+            tmax = tdata.index.max()
+            tsplit = tmax - timedelta(days=365)
+            clf = self.neuralN(tdata[tsplit:])
 
         data["predictions"] = clf.predict(data["dummydata"].tolist())
 
@@ -123,14 +124,15 @@ class Models(CallCenter):
 
     def webPrediction(self, startday, endday):
 
-        print("oyooo")
         predictData = self.createDateDF(startday, endday)
+        predictData = predictData.resample("H").mean().between_time("8:00", "18:00")
         predictData = self.concatDFs(predictData, self.dBtoDf(self.dateCollection))
-
         predictedData = self.predict(predictData)
 
-        predictedData.plot(x="Date", y="Ammount of calls", kind="bar", label="Predicted calls")
-        plt.savefig("static/predicted.png")
+        predictedData["predictions"].plot(kind="bar", label="Predicted calls")
+        plt.xlabel("Time")
+        plt.ylabel("Predicted Calls")
+        plt.savefig("static/predicted.png", bbox_inches='tight')
         plt.cla()
 
 if __name__ =="__main__":
@@ -139,7 +141,12 @@ if __name__ =="__main__":
     tdata = c.binnedType(tdata)
     ddata = c.dBtoDf(c.dateCollection)
     tdata = c.concatDFs(tdata, ddata)
-    c.neuralN(tdata)
+    tmax = tdata.index.max()
+    tsplit = tmax - timedelta(days=365)
+
+    c.neuralN(tdata[tsplit:])
+
+
     startDateTime = datetime(year=2016, month=1, day=1)
     endDateTime = datetime(year=2016, month=2, day=1)
 

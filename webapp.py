@@ -3,6 +3,7 @@ from flask import render_template
 from flask import request, url_for
 from wtforms.fields.html5 import DateField
 from flask_wtf import FlaskForm
+from datetime import timedelta
 
 import pandas as pd
 from predModels import Models
@@ -59,7 +60,7 @@ def predictions():
     if form.validate_on_submit():
 
         startdate = pd.to_datetime(form.startdate.data.strftime('%Y-%m-%d'))
-        enddate = pd.to_datetime(form.enddate.data.strftime('%Y-%m-%d'))
+        enddate = pd.to_datetime(form.enddate.data.strftime('%Y-%m-%d')) + timedelta(hours=23)
         print(startdate)
         print(enddate)
         #models.webPrediction(startdate, enddate)
@@ -69,6 +70,19 @@ def predictions():
 
 @app.route("/predictresults", methods=["GET", "POST"])
 def predictresults():
+    form = DateForm()
+
+    startdate = pd.to_datetime(form.startdate.data.strftime('%Y-%m-%d'))
+    enddate = pd.to_datetime(form.enddate.data.strftime('%Y-%m-%d'))
+
+    if startdate > enddate:
+        startdate, enddate = enddate, startdate
+
+    enddate += timedelta(hours=24)
+    print(startdate)
+    print(enddate)
+
+    models.webPrediction(startdate, enddate)
 
     return render_template("predictresults.html")
 
