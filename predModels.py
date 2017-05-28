@@ -167,9 +167,7 @@ class Models(CallCenter):
         daylist = normalize(daydata.tolist())[0]
         weekdaylist = normalize(weekdaylist.tolist())[0]
 
-        for i, group in enumerate(data.groupby(data.index.date)):
-            for j,r in group[1].iterrows():
-                r["dummydata"].append(daylist[i])
+
 
         for i, group in enumerate(weekdf.groupby(weekdf.index.date)):
             for j, r in group[1].iterrows():
@@ -178,6 +176,10 @@ class Models(CallCenter):
         try:
             clf = joblib.load("mlp_ts.pkl")
         except:
+            for i, group in enumerate(data.groupby(data.index.date)):
+                for j, r in group[1].iterrows():
+                    r["dummydata"].append(daylist[i])
+
             clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120), random_state=1,
                                 early_stopping=False)
             tmax = data.index.max()
@@ -209,6 +211,15 @@ class Models(CallCenter):
         d = df1.add(df2, fill_value=0)
         return df1, df2
 
+    def webPredictNextWeek(self, data):
+
+        result = self.predictNextWeek(data)
+        result = result.resample('1H').replace(np.nan, 0)
+        result["Predicted w Timeseries"].plot()#.bar()#(kind="bar")
+        plt.ylabel("Ammount of calls")
+        plt.xlabel("Date")
+        plt.savefig("static/weekpredicted.png", bbox_inches='tight')
+        plt.cla()
 
 if __name__ =="__main__":
     c = Models()
@@ -227,6 +238,8 @@ if __name__ =="__main__":
     actual = tdata[splitdate:]
 
     findf = c.concatDFs(predicteddf, actual)
+    findf = findf.resample('1H').replace(np.nan, 0)
+
     findf.plot()
     #predicteddf.plot()
     plt.show()
