@@ -6,15 +6,12 @@ import statsmodels.tsa.stattools as ts_tools
 import statsmodels.graphics.tsaplots as ts_plots
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.statespace import sarimax as sx
-from datetime import timedelta
 import warnings
-
 from gridsearch import getTSeries
 
 
 # # --- Let's create some series ---
 bestillingDailySeries = getTSeries('Mobile Bestilling', "1D", "00:00", "23:59")
-logBestilling = np.log(bestillingDailySeries)
 bestillingHourlySeries = getTSeries('Mobile Bestilling')
 
 # # --- Just exploring the series ---
@@ -37,7 +34,7 @@ bestillingHourlySeries = getTSeries('Mobile Bestilling')
 all_plots, axes = pyplot.subplots(1,2)
 all_plots = ts_plots.plot_acf(bestillingDailySeries, lags=40, ax=axes[0])
 all_plots = ts_plots.plot_pacf(bestillingDailySeries, lags=40, ax=axes[1])
-pyplot.suptitle('Analysis of correlations')
+pyplot.suptitle('Analysis of correlations for daily Bestilling calls')
 pyplot.show()
 
 # # --- First difference ---
@@ -47,7 +44,7 @@ pyplot.show()
 # pyplot.suptitle('Yearly differentiated series of daily Bestilling calls')
 # pyplot.show()
 
-# # --- Observing the weekly mean ---
+# # --- Observing the weekly mean + correlations ---
 # resample = bestillingDailySeries.resample('W')
 # weekly_mean = resample.mean()
 # print("Weekly mean: ", weekly_mean.head())
@@ -61,7 +58,7 @@ pyplot.show()
 # pyplot.suptitle('Analysis of correlations for weekly means')
 # pyplot.show()
 #
-# # --- Observing the monthly mean ---
+# # --- Observing the monthly mean + correlations  ---
 # resample = bestillingSeries.resample('M')
 # monthly_mean = resample.mean()
 # print("Monthly mean: ", monthly_mean.head())
@@ -77,7 +74,7 @@ pyplot.show()
 
 # # - - - M O D E L I N G - - -
 #
-# # --- ARIMA ---
+# # --- Let's try ARIMA ---
 #
 # # -- Fit model ARIMA(1,1,0) for daily BESTILLING --
 # model = ARIMA(bestillingDailySeries, order=(1,1,0))
@@ -100,10 +97,7 @@ pyplot.show()
 
 
 # # NEW APPROACH:
-# --- GRID SEARCH ---
-
-
-# # # --- EVALUATION OF PARAMETERS WITH GRID SEARCH (to be run once!) ---
+# --- GRID SEARCH: EVALUATION OF PARAMETERS WITH GRID SEARCH (to be run once!) ---
 #
 # # -- For DAILY BINNING --
 # p_values = [1, 2, 3, 7]
@@ -159,12 +153,15 @@ def getTimeSeriesPrediction(data, n_pred):
     yhat = daily_model_fit.predict(end = maxdate + n_pred)
     # print("PREDICTIONS: ", yhat)
 
-    # # plot prediction
-    # pyplot.plot(bestillingDailySeries, 'k-', label='actual calls', alpha=0.7)
-    # pyplot.plot(yhat, color='blue', label='time series prediction', linewidth=2, alpha=0.9)
-    # pyplot.legend()
-    # pyplot.show()
+    # plot prediction
+    pyplot.plot(bestillingDailySeries, 'k-', label='actual calls', alpha=0.7)
+    pyplot.plot(yhat, color='blue', label='time series prediction', linewidth=2, alpha=0.9)
+    pyplot.legend()
+    pyplot.show()
     return yhat
+
+# # -- Let's call the function for daily data, predicting 2 weeks (we can later run for hourly data)
+predictions = getTimeSeriesPrediction(bestillingDailySeries, 14)
 # # # - - - -   T H E   E N D   - - - - # # #
 
 # # --- Prediction of last two weeks for SARIMAX(7,1,0)(1,1,1,7)  ---
