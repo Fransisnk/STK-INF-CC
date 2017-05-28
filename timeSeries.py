@@ -265,15 +265,20 @@ pyplot.legend()
 pyplot.show()
 # # This works
 
+# # # - - - -   F O R   P R O G R A M M E R S   - - - - # # #
 # # --- Prediction of last two weeks for SARIMAX(7,1,0)(1,1,1,7) with predict() ---
 maxdate = bestillingDailySeries.index.max()
-yhat_pred = daily_model_fit.predict(end = maxdate + 14)
+daily_model = sx.SARIMAX(bestillingDailySeries, exog=None, order=(7,1,0), seasonal_order=(1,1,1,7), trend='t')
+daily_model_fit = daily_model.fit(disp=0)
+
+PREDICTIONS = daily_model_fit.predict(end = maxdate + 14)
+print("PREDICTIONS: ", PREDICTIONS)
 # plot prediction
 pyplot.plot(bestillingDailySeries, 'k-', label='actual calls', alpha=0.7)
-pyplot.plot(yhat_pred, color='blue', label='time series prediction', linewidth=2, alpha=0.9)
+pyplot.plot(PREDICTIONS, color='blue', label='time series prediction', linewidth=2, alpha=0.9)
 pyplot.legend()
 pyplot.show()
-# # This works
+# # # - - - -   T H E   E N D   - - - - # # #
 
 # # --- Prediction of last two weeks for SARIMAX(7,1,0)(1,1,1,7)  ---
 # # TODO: conform splitting of training and testing data to what we have in linearRegression.py in readAndPrepareData()
@@ -286,4 +291,3 @@ pyplot.show()
 # pyplot.show()
 # # This doesn't work
 # # TODO: figure out why it's running forever and doesn't get to showing the plots
-
