@@ -267,8 +267,7 @@ pyplot.show()
 
 # # --- Prediction of last two weeks for SARIMAX(7,1,0)(1,1,1,7) with predict() ---
 maxdate = bestillingDailySeries.index.max()
-start_predict_from = maxdate - timedelta(14)
-yhat_pred = daily_model_fit.predict(end = "2017-05-30")
+yhat_pred = daily_model_fit.predict(end = maxdate + 14)
 # plot prediction
 pyplot.plot(bestillingDailySeries, 'k-', label='actual calls', alpha=0.7)
 pyplot.plot(yhat_pred, color='blue', label='time series prediction', linewidth=2, alpha=0.9)
