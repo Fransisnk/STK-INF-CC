@@ -86,5 +86,15 @@ def predictresults():
 
     return render_template("predictresults.html")
 
+@app.route("/prednextweek", methods=["GET", "POST"])
+def prednextweek():
+    tdata = models.dBtoDf(models.callCollection)
+    tdata = models.binnedType(tdata)
+    ddata = models.dBtoDf(models.dateCollection)
+    tdata = models.concatDFs(tdata, ddata)
+    models.predictNextWeek(tdata)
+
+    return render_template("prednextweek.html")
+
 if __name__ == "__main__":
     app.run()
