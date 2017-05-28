@@ -174,7 +174,11 @@ class CallCenter():
         :param endDateTime: datetime.datetime
         :return: pandas Dataframe
         '''
-        dateList = pd.date_range(start=startDateTime, end=endDateTime, freq="H")
+        startDate = startDateTime
+        endDate = endDateTime
+        if startDateTime > endDateTime:
+            startDate, endDate = endDate, startDate
+        dateList = pd.date_range(start=startDate, end=endDate, freq="H")
         dataframe = pd.Series(index=dateList).to_frame()
         return (dataframe)
 
