@@ -20,7 +20,7 @@ def getTSeries(callType, bin = "1H", startDay = '8:00', endDay = '18:00'):
     data = c.binnedType(c.cdf, callType, bin, startDay, endDay)
     return pd.Series(data['Offered_Calls'], index = data.index)
 
-def predict_per_point(X, sarimax_order, split_date, best_order=None):
+def MSE(X, sarimax_order, split_date, best_order=None):
     """
     Fits an ARIMA for a given (p,d,q) or
     SARIMAX model for a given (P,D,Q,s), given also a fixed best (p,d,q)
@@ -37,25 +37,26 @@ def predict_per_point(X, sarimax_order, split_date, best_order=None):
     # TODO: make sure that best order is either None (non existent, not used) or a list of 3 elements (p,d,q)
     # prepare training dataset
     train, test = X[0:split_date], X[split_date:]
+    if len(sarimax_order)==3:
+        error = predict(train, test, a_order = sarimax_order)
+    elif len(sarimax_order)==4:
+        error = predict(train, test, a_order = best_order, s_order=sarimax_order)
+    else:
+        print("Wrong number of parameters!")
+    return error
+
+def predict(train, test, a_order, s_order):
     history = [x for x in train]
-    # make predictions
     predictions = list()
     for t in range(len(test)):
-        if len(sarimax_order)==3:
-            model = sx.SARIMAX(history, order=sarimax_order)
-        elif len(sarimax_order)==4:
-            model = sx.SARIMAX(history, order=best_order, seasonal_order=sarimax_order)
-        else:
-            print("Wrong number of parameters!")
-            break
+        model = sx.SARIMAX(history, order=a_order, seasonal_order=s_order)
         model_fit = model.fit(disp=0)
         yhat = model_fit.forecast()[0]
         predictions.append(yhat)
         history.append(test[t])
     # calculate out of sample error
     error = mean_squared_error(test, predictions)
-    return predictions, error, test
-
+    return predictions, error
 
 def evaluate_pdq(dataset, p_values, d_values, q_values):
     """
@@ -70,14 +71,13 @@ def evaluate_pdq(dataset, p_values, d_values, q_values):
     best_score, best_cfg = float("inf"), None
     threefourths = int(len(dataset) * 0.75)
     newDate = dataset.index.max() - timedelta(days=threefourths)
-    dataset.index(timedelta())
     for p in p_values:
         for d in d_values:
             for q in q_values:
                 arima_order = (p,d,q)
                 print("order: ", arima_order)
                 try:
-                    mse = predict_per_point(dataset, arima_order, newDate)[1]
+                    mse = MSE(dataset, arima_order, newDate)
                     if mse < best_score:
                         print("We got a new best score!")
                         best_score, best_cfg = mse, arima_order
@@ -109,7 +109,7 @@ def evaluate_PDQs(dataset, P_values, D_values, Q_values, s_values, best_order=(0
                     seasonal_order = (P,D,Q,s)
                     print("order: ", seasonal_order)
                     try:
-                        mse = predict_per_point(dataset, seasonal_order, best_order)[1]
+                        mse = MSE(dataset, seasonal_order, best_order)
                         if mse < best_score:
                             print("We got a new best score!")
                             best_score, best_cfg = mse, seasonal_order
