@@ -176,7 +176,7 @@ class CallCenter():
         '''
         startDate = startDateTime
         endDate = endDateTime
-        if startDateTime < endDateTime:
+        if startDateTime > endDateTime:
             startDate, endDate = endDate, startDate
         dateList = pd.date_range(start=startDate, end=endDate, freq="H")
         dataframe = pd.Series(index=dateList).to_frame()
