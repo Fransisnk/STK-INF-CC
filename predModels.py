@@ -180,11 +180,12 @@ class Models(CallCenter):
                 for j, r in group[1].iterrows():
                     r["dummydata"].append(daylist[i])
 
-            clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120), random_state=1,
-                                early_stopping=False)
-            tmax = data.index.max()
-            tsplit = tmax - timedelta(days=365)
-            clf.fit(data["dummydata"][tsplit:].tolist(), data["Offered_Calls"][tsplit:].tolist())
+            clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120,100,100), random_state=1,
+                                early_stopping=True)
+            #tmax = data.index.max()
+            #tsplit = tmax - timedelta(days=700)
+            #clf.fit(data["dummydata"][tsplit:].tolist(), data["Offered_Calls"][tsplit:].tolist())
+            clf.fit(data["dummydata"].tolist(), data["Offered_Calls"].tolist())
             joblib.dump(clf, 'mlp_ts.pkl')
 
         #Add timeseries to weekdf

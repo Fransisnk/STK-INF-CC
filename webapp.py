@@ -56,16 +56,6 @@ def kmeans_results():
 def predictions():
 
     form = DateForm()
-
-    if form.validate_on_submit():
-
-        startdate = pd.to_datetime(form.startdate.data.strftime('%Y-%m-%d'))
-        enddate = pd.to_datetime(form.enddate.data.strftime('%Y-%m-%d')) + timedelta(hours=23)
-        print(startdate)
-        print(enddate)
-        #models.webPrediction(startdate, enddate)
-        return
-
     return render_template('predictions.html', form=form)
 
 @app.route("/predictresults", methods=["GET", "POST"])
@@ -89,10 +79,11 @@ def predictresults():
 @app.route("/prednextweek", methods=["GET", "POST"])
 def prednextweek():
     tdata = models.dBtoDf(models.callCollection)
+    print(tdata.tail())
     tdata = models.binnedType(tdata)
     ddata = models.dBtoDf(models.dateCollection)
     tdata = models.concatDFs(tdata, ddata)
-    models.predictNextWeek(tdata)
+    models.webPredictNextWeek(tdata)
 
     return render_template("prednextweek.html")
 
