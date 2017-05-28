@@ -1,23 +1,25 @@
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import numpy as np
 from sklearn import linear_model
-import pandas as pd
 import dataframes
 from sklearn.neural_network import MLPClassifier
-from datetime import timedelta, datetime, date
+from datetime import timedelta
+from sklearn.externals import joblib
+import warnings
+warnings.filterwarnings("ignore")
+mpl.rcParams['figure.figsize'] = 16, 10
 
 
 class Training():
     def __init__(self):
-        self.dataframe = dataframes.CallCenter()
-        data = self.dataframe.binnedType(self.dataframe.dBtoDf(), timeDelta="1H")
-        data = self.dataframe.addDummy(data)
+        pass
 
-
-        self.readAndPrepareData(data, trainingDays=100, testDays=20)
-
-        actualDF = self.dataframe.concatDFs(self.dataframe.dBtoDf(db=self.dataframe.callCollection), self.dataframe.dBtoDf(self.dataframe.dateCollection)) #kinda doesn't work yet
-
+    def fetchData(self):
+        dataframe = dataframes.CallCenter()
+        data = dataframe.binnedType(dataframe.dBtoDf(), timeDelta="1H")
+        data = dataframe.addDummy(data)
+        return data
 
 
     def readAndPrepareData(self, dataframe, trainingDays=365, testDays=14):
@@ -28,55 +30,60 @@ class Training():
         #reduce data size (only train on X days)
         maxdate = timeData.max()
         dateToCutDataAt = maxdate - timedelta(days=(trainingDays + testDays))
-        print(dateToCutDataAt, type(dateToCutDataAt))
         data = dataframe.ix[dateToCutDataAt:]
-
         print('length of cut data:', len(data))
-        print('type:', type(data))
 
-        dummyData = data['dummydata']
-        callData = data['Offered_Calls']
 
         # splitting up N days of training data as a test set
         testFromThisDateOn = maxdate - timedelta(days=testDays)
 
         # defining train and test sets of data
+        dummyData = data['dummydata']
+        callData = data['Offered_Calls']
         dummyData_train = dummyData[:testFromThisDateOn].tolist()
         dummyData_test = dummyData[testFromThisDateOn:].tolist()
         calls_train = callData[:testFromThisDateOn].tolist()
         calls_test = callData[testFromThisDateOn:].tolist()
 
 
+        resultDF = data[testFromThisDateOn:]
+
         # training linreg
         regr = linear_model.LinearRegression()
         regr.fit(dummyData_train, calls_train)
 
         # training MLP
-        clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150, 123), random_state=1,
-                            early_stopping=False)
-        clf.fit(dummyData_train, calls_train)
+        try:
+            clf = joblib.load("mlp2.pkl")
+        except:
+            clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150, 123), random_state=1, early_stopping=False)
+            clf.fit(dummyData_train, calls_train)
+            joblib.dump(clf, 'mlp2.pkl')
 
 
         # predicting LinReg and MLP
         predictionLinReg = regr.predict(dummyData_test)
         predictionMLP = clf.predict(dummyData_test)
 
-
         # cut out negative predicted values of the linear regression model
         for index, value in enumerate(predictionLinReg):
             if value < 0:
                 predictionLinReg[index] = 0
 
+        resultDF['resultMLP'] = predictionMLP
+        resultDF['resultLinReg'] = predictionLinReg
+        resultDF['actual calls'] = data['Offered_Calls']
+
 
         # the coefficients
-        print('Coefficients: \n', regr.coef_)
-
+        #print('Coefficients: \n', regr.coef_)
         # the mean squared error
-        print("Mean squared error: %.2f"
-              % np.mean((regr.predict(dummyData_test) - calls_test) ** 2))
+        print("LinReg mean squared error: %.2f"
+              % np.mean((resultDF['resultLinReg'] - calls_test) ** 2))
+        print("MLP mean squared error: ", np.mean((resultDF['resultMLP'] - calls_test) ** 2))
         # Explained variance score: 1 is perfect prediction
-        print('Variance score: %.2f' % regr.score(dummyData_test, calls_test))
-        # print('Variance score: %.2f' % regr.score(calls_test, predictionMLP))
+        print('Variance score LinReg: %.2f' % regr.score(dummyData_test, calls_test))
+        #print('Variance score MLP: %.2f' % regr.score(calls_test, predictionMLP))
 
 
         percentOfDeviation = []
@@ -85,51 +92,40 @@ class Training():
                 #print(item, 'vs ', calls_test[index])
                 percentOfDeviation.append(item)
         print('mean hit rate 25%: ', len(percentOfDeviation) / len(calls_test))
-        linRegDeltas = predictionLinReg - calls_test
-        MLPDeltas = predictionMLP - calls_test
-        timeData = timeData.tolist()
-        testFromThisDateOn = timeData.index(testFromThisDateOn)
 
-        zeroList = [0] * len(predictionMLP) # make a list of zeros for indenting the ground line later on
-        #plt.plot(timeData[testFromThisDateOn:], predictionLinReg, 'r-', label='prediction of LinReg', linewidth=2)
-        plt.plot(timeData[testFromThisDateOn:], predictionMLP, 'g-', label='mlpPrediction', linewidth=2, alpha=0.9)
-        plt.plot(timeData[testFromThisDateOn:], zeroList, 'k-') # add black baseline to make more clear
-        plt.plot(timeData[testFromThisDateOn:], calls_test, 'k-', label='actual calls', alpha=0.7)
-        #plt.plot(timeData[testFromThisDateOn:], linRegDeltas, 'y-', label='LinReg delta')
-        #plt.plot(timeData[testFromThisDateOn:], MLPDeltas, 'm-', label='MLP delta')
+
+        resultDF['linRegDeltas'] = predictionLinReg - calls_test
+        resultDF['MLPDeltas'] = predictionMLP - calls_test
+        resultDF = resultDF.resample('1H').replace(np.nan, 0) #resample and add empty hours for plotting
+
+        return resultDF
+
+
+
+    def plotMLPandLinReg(self, dataframe, days=None):
+
+
+        plt.plot(dataframe['resultMLP'][:days], color='#00A113', label='prediction MLP', linewidth=1.6, alpha=0.9)
+        plt.plot(dataframe['resultLinReg'][:days], color='#A600B5', label='prediction LinReg', linewidth=1.6, alpha=0.9)
+        plt.plot(dataframe['actual calls'][:days], color='red', label='actual calls', alpha=0.8, linewidth=1.4, linestyle='dashed')
+        plt.axhline(0, color='k', linewidth=2)
         plt.legend()  # creates a legend
-        # plt.ylim([0,250]) # limits the axis size
         plt.show()
 
+    def plotDeviations(self, dataframe):
+        plt.plot(dataframe['linRegDeltas'], color='#A600B5', linewidth=1.6, label='LinReg delta', alpha=0.85)
+        plt.plot(dataframe['MLPDeltas'], color='#00A113', linewidth=1.6, label='MLP delta', alpha=0.85)
+        plt.axhline(0, color='k', linewidth=2)
+        plt.ylim([-450, 450])
 
-    def calcMSE(self, model1, model2, actualValue):
-        '''
-        calculates the MSE and Deltas of model1 resp. model2 and the actual values
-        :param model1: list
-        :param model2: list
-        :param actualValue: list
-        :return: tuple(
-        '''
-        deltaModel1 = 0
-        deltaModel2 = 0
-        deltaList1 = []
-        deltaList2 = []
-        for index, value in enumerate(actualValue):
-            delta1 = value - model1[index]
-            deltaModel1 += delta1**2
-
-            delta2 = value - model2[index]
-            deltaModel2 += delta2**2
-
-            deltaList1.append(delta1)
-            deltaList2.append(delta2)
-        listLength = len(actualValue)
-        MSE1 = deltaModel1 / listLength
-        MSE2 = deltaModel2 / listLength
-        return MSE1, MSE2, deltaList1, deltaList2
+        plt.legend()  # creates a legend
+        plt.show()
 
 
 
 
 if __name__ == "__main__":
     training = Training()
+    data = training.fetchData()
+    dataframe = training.readAndPrepareData(data, trainingDays=100, testDays=14)
+    training.plotDeviations(dataframe)
