@@ -132,10 +132,19 @@ class Models(CallCenter):
         predictData = self.concatDFs(predictData, self.dBtoDf(self.dateCollection))
         predictedData = self.predict(predictData)
 
-        predictedData["predictions"].plot(kind="bar", label="Predicted calls")
+        days = len(np.unique(predictData.index.day))
+
+        if days < 5:
+            predictedData["predictions"].plot(kind="bar", label="Predicted calls")
+        else:
+            predictedData = predictedData.resample('1H').replace(np.nan, 0)
+            predictedData["predictions"].plot(label="Predicted calls")
+
+
+        plt.locator_params(nbins=days + 1)
+
         plt.xlabel("Time")
         plt.ylabel("Predicted Calls")
-        plt.locator_params(nbins=len(np.unique(predictData.index.day))+1)
         plt.savefig("static/predicted.png", bbox_inches='tight')
         plt.cla()
 
