@@ -96,7 +96,7 @@ class Training():
 
         resultDF['linRegDeltas'] = predictionLinReg - calls_test
         resultDF['MLPDeltas'] = predictionMLP - calls_test
-        resultDF = resultDF.resample('1H').replace(np.nan, 0) #resample and add empty hours for plotting
+        resultDF = resultDF.resample('1H').mean().replace(np.nan, 0) #resample and add empty hours for plotting
 
         return resultDF
 

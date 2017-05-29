@@ -5,8 +5,11 @@ from sklearn.neural_network import MLPClassifier
 from datetime import datetime
 import matplotlib.pyplot as plt
 import pandas as pd
-
+import statsmodels.tsa.api as tsa
+import pickle
 from sklearn.externals import joblib
+from sklearn.preprocessing import normalize
+import numpy as np
 
 class Models(CallCenter):
     def __init__(self):
@@ -132,21 +135,127 @@ class Models(CallCenter):
         predictedData["predictions"].plot(kind="bar", label="Predicted calls")
         plt.xlabel("Time")
         plt.ylabel("Predicted Calls")
+        plt.locator_params(nbins=len(np.unique(predictData.index.day))+1)
         plt.savefig("static/predicted.png", bbox_inches='tight')
+        plt.cla()
+
+    def predictNextWeek(self, data):
+
+        max = data.index.max()
+        end = max + timedelta(days=7)
+
+        weekdf = self.createDateDF(max, end)
+        weekdf = weekdf.resample("H").mean().between_time("8:00", "18:00")
+        weekdf = self.concatDFs(weekdf, self.dBtoDf(self.dateCollection))
+
+        #clf = joblib.load("mlp.pkl")
+        try:
+            clf = joblib.load("mlp1_ts.pkl")
+        except:
+            clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120), random_state=1,
+                                early_stopping=False)
+            tmax = data.index.max()
+            tsplit = tmax - timedelta(days=365)
+            clf.fit(data["dummydata"][tsplit:].tolist(), data["Offered_Calls"][tsplit:].tolist())
+            joblib.dump(clf, 'mlp1_ts.pkl')
+
+        weekdf["Predicted w/o Timeseries"] = clf.predict(weekdf["dummydata"].tolist())
+
+        #Add timeseries to df
+        daydata = data.resample("D").sum()
+        daydata, weekdaylist= self.tseries(daydata,7)
+
+        daylist = normalize(daydata.tolist())[0]
+        weekdaylist = normalize(weekdaylist.tolist())[0]
+
+
+
+        for i, group in enumerate(weekdf.groupby(weekdf.index.date)):
+            for j, r in group[1].iterrows():
+                r["dummydata"].append(weekdaylist[i])
+
+        try:
+            clf = joblib.load("mlp_ts.pkl")
+        except:
+            for i, group in enumerate(data.groupby(data.index.date)):
+                for j, r in group[1].iterrows():
+                    r["dummydata"].append(daylist[i])
+
+            clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120,100,100), random_state=1,
+                                early_stopping=True)
+
+            clf.fit(data["dummydata"].tolist(), data["Offered_Calls"].tolist())
+            joblib.dump(clf, 'mlp_ts.pkl')
+
+        #Add timeseries to weekdf
+        weekdf["Predicted w Timeseries"] = clf.predict(weekdf["dummydata"].tolist())
+
+
+        return weekdf
+
+    def tseries(self, ts, day):
+        try:
+            res = pickle.load(open("tseries.p", "rb"))
+        except:
+            mod = tsa.statespace.SARIMAX(ts, order=(7, 1, 0), seasonal_order=(1, 1, 1, 7))
+            res = mod.fit(disp=False)
+            pickle.dump(res, open("tseries.p", "wb"))
+
+
+        df1 = res.fittedvalues
+        df2 = res.predict(len(ts), len(ts) + day)
+        return df1, df2
+
+    def webPredictNextWeek(self, data):
+
+        result = self.predictNextWeek(data)
+        result = result.resample('1H').replace(np.nan, 0)
+        result["Predicted w Timeseries"].plot()#.bar()#(kind="bar")
+        plt.ylabel("Ammount of calls")
+        plt.xlabel("Date")
+        plt.locator_params(nbins=10)
+        plt.savefig("static/weekpredicted.png", bbox_inches='tight')
         plt.cla()
 
 if __name__ =="__main__":
     c = Models()
+
     tdata = c.dBtoDf(c.callCollection)
     tdata = c.binnedType(tdata)
+
     ddata = c.dBtoDf(c.dateCollection)
     tdata = c.concatDFs(tdata, ddata)
-    tmax = tdata.index.max()
-    tsplit = tmax - timedelta(days=365)
 
-    c.neuralN(tdata[tsplit:])
+    splitdate = tdata.index.max() - timedelta(days=7)
+    #    print(tdata.tail())
+    #    print(tdata[:splitdate].tail())
 
+    predicteddf = c.predictNextWeek(tdata[:splitdate])
+    actual = tdata[splitdate:]
 
+    findf = c.concatDFs(predicteddf, actual)
+    findf = findf.resample('1H').mean().replace(np.nan, 0)
+
+    findf.plot()
+    #predicteddf.plot()
+    plt.show()
+    plt.cla()
+
+    #MSE
+    nots = np.array(predicteddf["Predicted w/o Timeseries"].tolist())
+    wts = np.array(predicteddf["Predicted w Timeseries"].tolist())
+    actuallist = np.array(actual["Offered_Calls"].tolist())
+
+    notsmse = ((nots-actuallist)**2).mean(axis=None)
+    wtsmse = ((wts - actuallist) ** 2).mean(axis=None)
+    print("Mse for no ts: ", notsmse)
+    print("Mse for ts: ", wtsmse)
+    # tmax = tdata.index.max()
+    #tsplit = tmax - timedelta(days=365)
+
+    #c.neuralN(tdata[tsplit:])
+
+    """
     startDateTime = datetime(year=2016, month=1, day=1)
     endDateTime = datetime(year=2016, month=2, day=1)
 
@@ -156,5 +265,5 @@ if __name__ =="__main__":
     testset = c.predict(testset)
 
     testset["predictions"].plot(kind="bar")
-    plt.show()
+    plt.show()"""
 
