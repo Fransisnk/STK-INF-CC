@@ -1,12 +1,12 @@
 # STK-INF-CC
 
-- *Fransis Kolstø       (Bachelor)*
+- *Fransis Kolstø*       (Bachelor)
 
-- *Wei Liu      (Master)*
+- *Wei Liu*              (Master)
 
-- *Felix Schweinfest        (Bachelor)*
+- *Felix Schweinfest*    (Bachelor)
 
-- *Harjeet Harpal       (Master)*
+- *Harjeet Harpal*       (Master)
 
 
 The two Jupyter Notebooks used in the presentation are the (only) two in this repository: `presentation29.05.17.ipynb` and `Timeseries.ipynb`.
