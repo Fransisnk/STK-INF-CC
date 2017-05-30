@@ -1,8 +1,5 @@
 from pandas import DataFrame
-import numpy as np
 from matplotlib import pyplot
-from pandas.tools.plotting import autocorrelation_plot
-import statsmodels.tsa.stattools as ts_tools
 import statsmodels.graphics.tsaplots as ts_plots
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.statespace import sarimax as sx
