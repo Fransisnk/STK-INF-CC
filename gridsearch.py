@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 from statsmodels.tsa.statespace import sarimax as sx
 from sklearn.metrics import mean_squared_error
 from datetime import timedelta
@@ -21,33 +20,19 @@ def getTSeries(callType, bin = "1H", startDay = '8:00', endDay = '18:00'):
     data = c.binnedType(c.cdf, callType, bin, startDay, endDay)
     return pd.Series(data['Offered_Calls'], index = data.index)
 
-def MSE(X, sarimax_order, split_date, b_order=None):
+
+def getSplitDate(dataset, perc):
     """
-    Fits an ARIMA for a given (p,d,q) or
-    SARIMAX model for a given (P,D,Q,s), given also a fixed best (p,d,q)
-    depending on the number of parameters given (3 or 4)
-    :param X: Array of data
-    :param sarimax_order: Array of parameters
-    :param best_order: Array of best ARIMA(p,d,q)
-    :param split_date: date where we stop training and start testing
-    :return: Prediction values for test set and Mean Squared Error (and test set)
+    Gets date where to start to split from training set to test set
+    :param dataset: Series, data
+    :param perc: Float, percentage of data we want to test on
+    :return: Datetime, split date
     """
-    # TODO: make sure that best order is either None (non existent, not used) or a list of 3 elements (p,d,q)
-    print('here', len(sarimax_order), type(sarimax_order))
-    train, test = X[0:split_date], X[split_date:]
-    print("train: ", len(train))
-    print("test: ", len(test))
-    if (len(sarimax_order)) == 3:
-        print('sari 3')
-        mse = prediction(train, test, a_order = sarimax_order)[1]
-    elif len(sarimax_order) == 4:
-        print('sari 4')
-        mse = prediction(train, test, a_order = b_order, s_order=sarimax_order)[1]
-        print(mse)
-    else:
-        print("Wrong number of parameters!")
-    print('error', mse)
-    return mse
+    firstday, lastday = dataset.index.min(), dataset.index.max()
+    daydelta = lastday - firstday
+    newDate = dataset.index.max() - timedelta(days=int(daydelta.days * perc))
+    return newDate
+
 
 def prediction(train, test, a_order, s_order=(0,0,0,0)):
     """
@@ -63,24 +48,39 @@ def prediction(train, test, a_order, s_order=(0,0,0,0)):
     # prepare training dataset
     history = [x for x in train]
     predictions = []
-    print("predict!")
-    print(len(test))
     for t in range((len(test))):
-        print(t)
         model = sx.SARIMAX(history, order=a_order, seasonal_order=s_order)
-        print("model: done")
         model_fit = model.fit(disp=0)
         yhat = model_fit.forecast()[0]
         predictions.append(yhat)
-        print("yhat: ", yhat)
-        print("predictions: ", predictions)
         history.append(test[t])
     # calculate out of sample error
     mserror = mean_squared_error(test, predictions)
-    print("Error: ", mserror)
     return predictions, mserror
 
-def evaluate_pdq(dataset, p_values, d_values, q_values):
+def MSE(X, sarimax_order, split_date, b_order=(0,0,0)):
+    """
+    Fits an ARIMA for a given (p,d,q) or
+    SARIMAX model for a given (P,D,Q,s), given also a fixed best (p,d,q)
+    depending on the number of parameters given (3 or 4)
+    :param X: Array of data
+    :param sarimax_order: Array of parameters
+    :param best_order: Array of best ARIMA(p,d,q)
+    :param split_date: date where we stop training and start testing
+    :return: Prediction values for test set and Mean Squared Error (and test set)
+    """
+    # TODO: make sure that best order is either None (non existent, not used) or a list of 3 elements (p,d,q)
+    train, test = X[:split_date], X[split_date:]
+    if (len(sarimax_order)) == 3:
+        mse = prediction(train, test, a_order = sarimax_order)[1]
+    elif len(sarimax_order) == 4:
+        mse = prediction(train, test, a_order = b_order, s_order=sarimax_order)[1]
+        print(mse)
+    else:
+        print("Wrong number of parameters!")
+    return mse
+
+def evaluate_pdq(dataset, p_values, d_values, q_values, perc = 0.25):
     """
     Evaluates combinations of p, d and q values for an ARIMA model (printing intermediate results)
     :param dataset: Dataset or Series of data
@@ -89,23 +89,15 @@ def evaluate_pdq(dataset, p_values, d_values, q_values):
     :param q_values: Array of q values
     :return: Best hyperparameters configuration, and minimum MSE of this model
     """
-    # dataset = dataset.astype('float32')
     best_score, best_cfg = float("inf"), None
-    firstday, lastday = dataset.index.min(), dataset.index.max()
-    print(firstday)
-    print(lastday)
-    daydelta = lastday - firstday
-    perc = int(daydelta.days * 0.25)
-    newDate = dataset.index.max() - timedelta(days=perc)
-    print(newDate)
+    newDate = getSplitDate(dataset, perc)
     for p in p_values:
         for d in d_values:
             for q in q_values:
                 arima_order = (p,d,q)
-                print("order: ", arima_order)
+                print("Order: ", arima_order)
                 try:
                     mse = MSE(dataset, arima_order, newDate)
-                    print("got in!")
                     if mse < best_score:
                         print("We got a new best score!")
                         best_score, best_cfg = mse, arima_order
@@ -116,7 +108,7 @@ def evaluate_pdq(dataset, p_values, d_values, q_values):
     return best_cfg, best_score
 
 
-def evaluate_PDQs(dataset, P_values, D_values, Q_values, s_values, best_order=(0,0,0)):
+def evaluate_PDQs(dataset, P_values, D_values, Q_values, s_values, best_order, perc = 0.25):
     """
     Evaluates combinations of P, D, Q and s values for a SARIMAX model, given the best ARIMA(p,d,q)
     :param dataset: Dataset or Series of data
@@ -128,21 +120,14 @@ def evaluate_PDQs(dataset, P_values, D_values, Q_values, s_values, best_order=(0
     :return: Best hyperparameters configuration, and minimum MSE of this model
     """
     # TODO: make sure best order is a list with 3 elements
-    # dataset = dataset.astype('float32')
     best_score, best_cfg = float("inf"), None
-    firstday, lastday = dataset.index.min(), dataset.index.max()
-    print(firstday)
-    print(lastday)
-    daydelta = lastday - firstday
-    perc = int(daydelta.days * 0.25)
-    newDate = dataset.index.max() - timedelta(days=perc)
-    print(newDate)
+    newDate = getSplitDate(dataset, perc)
     for P in P_values:
         for D in D_values:
             for Q in Q_values:
                 for s in s_values:
                     seasonal_order = (P,D,Q,s)
-                    print("order: ", seasonal_order)
+                    print("Seasonal order: ", seasonal_order)
                     try:
                         mse = MSE(dataset, seasonal_order, newDate, b_order=best_order)
                         if mse < best_score:

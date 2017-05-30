@@ -7,7 +7,7 @@ import statsmodels.graphics.tsaplots as ts_plots
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.statespace import sarimax as sx
 import warnings
-from gridsearch import getTSeries, prediction, evaluate_pdq, evaluate_PDQs
+from gridsearch import getTSeries, evaluate_pdq, evaluate_PDQs
 from Tspredict import tseries
 
 
@@ -100,17 +100,18 @@ bestillingHourlySeries = getTSeries('Mobile Bestilling')
 # # NEW APPROACH:
 # --- GRID SEARCH: EVALUATION OF PARAMETERS WITH GRID SEARCH (to be run once!) ---
 #
-# -- For DAILY BINNING --
-p_values = [1, 2, 3, 7]
-d_values = range(0, 2)
-q_values = range(0, 3)
-
-S = range(0, 3)
-s_values = [0, 7]
-
-warnings.filterwarnings("ignore")
-daily_arima_res = evaluate_pdq(bestillingDailySeries, p_values, d_values, q_values)
-daily_sarimax_res = evaluate_PDQs(bestillingDailySeries, S, S, S, s_values, daily_arima_res[0])
+# # -- For DAILY BINNING --
+# p_values = [1, 2, 3, 7]
+# d_values = range(0, 2)
+# q_values = range(0, 3)
+#
+# S = range(0, 3)
+# s_values = [0, 7]
+#
+# warnings.filterwarnings("ignore")
+#
+# daily_arima_res = evaluate_pdq(bestillingDailySeries, p_values, d_values, q_values)
+# daily_sarimax_res = evaluate_PDQs(bestillingDailySeries, S, S, S, s_values, daily_arima_res[0])
 #
 # # -- For HOURLY BINNING --
 # p_values = [1, 2, 11, 77]
@@ -121,6 +122,7 @@ daily_sarimax_res = evaluate_PDQs(bestillingDailySeries, S, S, S, s_values, dail
 # s_values = [0, 11, 77]
 #
 # warnings.filterwarnings("ignore")
+
 # hourly_arima_res = evaluate_pdq(bestillingHourlySeries, p_values, d_values, q_values)
 # hourly_sarimax_res = evaluate_PDQs(bestillingHourlySeries, S, S, S, s_values, hourly_arima_res[0])
 
@@ -143,39 +145,15 @@ daily_sarimax_res = evaluate_PDQs(bestillingDailySeries, S, S, S, s_values, dail
 # pyplot.plot(yhat, color='red', label='time series fitted model', linewidth=2, alpha=0.9)
 # pyplot.legend()
 # pyplot.show()
-# # # This works
+
 
 # # # # - - - -   F O R   P R O G R A M M E R S   - - - - # # #
-# # # --- Prediction of last two weeks for SARIMAX(7,1,0)(1,1,1,7) with tseries() ---
-# # #Let's call the function for daily data, predicting 2 weeks (we can later run for hourly data)
-# predictions = tseries(bestillingDailySeries, 14)
-# # plot predictions
-# pyplot.plot(bestillingDailySeries, 'k-', label='actual calls', alpha=0.7)
-# pyplot.plot(predictions, color='blue', label='time series prediction', linewidth=2, alpha=0.9)
-# pyplot.legend()
-# pyplot.show()
+# # --- Prediction of last two weeks for SARIMAX(7,1,0)(1,1,1,7) with tseries() ---
+# #Let's call the function for daily data, predicting 2 weeks (we can later run for hourly data)
+predictions = tseries(bestillingDailySeries, 14)
+# plot predictions
+pyplot.plot(bestillingDailySeries, 'k-', label='actual calls', alpha=0.7)
+pyplot.plot(predictions, color='blue', label='time series fit and prediction', linewidth=2, alpha=0.9)
+pyplot.legend()
+pyplot.show()
 # # # # - - - -   T H E   E N D   - - - - # # #
-
-# # # --- Prediction of last two weeks for SARIMAX(7,1,0)(1,1,1,7)  ---
-# # TODO: conform splitting of training and testing data to what we have in linearRegression.py in readAndPrepareData()
-# first_pred = model = sx.SARIMAX(bestillingDailySeries, order=(7,1,0), seasonal_order=(1,1,1,7).fit(disp=0).forecast()[0]
-# print(first_pred)
-# predictions = predict_per_point(bestillingDailySeries, first_pred, [7,1,0], [1,1,1,7])
-# #print('predicted=%f, expected=%f'% (predictions[0], predictions[2]))
-# #print('Test MSE: %.3f' % predictions[1])
-# # plot
-# pyplot.plot(bestillingDailySeries, 'k-', label='actual calls', alpha=0.7)
-# pyplot.plot(predictions, color='red', label='time series prediction step by step', linewidth=2, alpha=0.9)
-# pyplot.show()
-# # This doesn't work
-# # TODO: figure out why it's running forever and doesn't get to showing the plots
-
-# mod = sx.SARIMAX(bestillingDailySeries,order=(7,1,0),seasonal_order=(1,1,1,7))
-# res = mod.fit()
-# print(res.summary())
-# predictions = res.predict(start="2016-11-8")
-# pyplot.plot(bestillingDailySeries, 'k-', label='actual calls', alpha=0.7)
-# pyplot.plot(predictions, color='red', label='time series prediction', linewidth=2, alpha=0.9)
-# pyplot.show()
-
-tseries(bestillingDailySeries, 15)
