@@ -12,6 +12,9 @@ from sklearn.preprocessing import normalize
 import numpy as np
 
 class Models(CallCenter):
+    """
+    Class for the actual predictions and modelling of the data.
+    """
     def __init__(self):
         CallCenter.__init__(self)
 
@@ -101,7 +104,7 @@ class Models(CallCenter):
 
         clf.fit(X,y)
 
-        joblib.dump(clf, 'mlp.pkl')
+        joblib.dump(clf, 'publicRes/mlp.pkl')
         return clf
 
     def predict(self, data):
@@ -112,7 +115,7 @@ class Models(CallCenter):
         :return: data with a new column predictions with the predictions.
         """
         try:
-            clf = joblib.load("mlp.pkl")
+            clf = joblib.load("publicRes/mlp.pkl")
         except:
 
             tdata = self.binnedType(self.dBtoDf(), timeDelta="1H")
@@ -126,6 +129,13 @@ class Models(CallCenter):
         return data
 
     def webPrediction(self, startday, endday):
+        """
+        Uses MLP to predict ammount of calls between two given days.
+        Plots the result using bars if less than 5 days are given, line else. The plot is saved for use in the web-app.
+        :param startday: datetime
+        :param endday: datetime
+        :return: none
+        """
 
         predictData = self.createDateDF(startday, endday)
         predictData = predictData.resample("H").mean().between_time("8:00", "18:00")
@@ -149,6 +159,11 @@ class Models(CallCenter):
         plt.cla()
 
     def predictNextWeek(self, data):
+        """
+        Given a dataset predicts the week after the end of that dataset using timeseries combined with MLP
+        :param data: pandas dataframe with dummydata
+        :return: pandas df with predicted calls
+        """
 
         max = data.index.max()
         end = max + timedelta(days=7)
@@ -159,14 +174,14 @@ class Models(CallCenter):
 
         #clf = joblib.load("mlp.pkl")
         try:
-            clf = joblib.load("mlp1_ts.pkl")
+            clf = joblib.load("publicRes/mlp1_ts.pkl")
         except:
             clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150,120), random_state=1,
                                 early_stopping=False)
             tmax = data.index.max()
             tsplit = tmax - timedelta(days=365)
             clf.fit(data["dummydata"][tsplit:].tolist(), data["Offered_Calls"][tsplit:].tolist())
-            joblib.dump(clf, 'mlp1_ts.pkl')
+            joblib.dump(clf, 'publicRes/mlp1_ts.pkl')
 
         weekdf["Predicted w/o Timeseries"] = clf.predict(weekdf["dummydata"].tolist())
 
@@ -184,7 +199,7 @@ class Models(CallCenter):
                 r["dummydata"].append(weekdaylist[i])
 
         try:
-            clf = joblib.load("mlp_ts.pkl")
+            clf = joblib.load("publicRes/mlp_ts.pkl")
         except:
             for i, group in enumerate(data.groupby(data.index.date)):
                 for j, r in group[1].iterrows():
@@ -194,7 +209,7 @@ class Models(CallCenter):
                                 early_stopping=True)
 
             clf.fit(data["dummydata"].tolist(), data["Offered_Calls"].tolist())
-            joblib.dump(clf, 'mlp_ts.pkl')
+            joblib.dump(clf, 'publicRes/mlp_ts.pkl')
 
         #Add timeseries to weekdf
         weekdf["Predicted w Timeseries"] = clf.predict(weekdf["dummydata"].tolist())
@@ -203,12 +218,18 @@ class Models(CallCenter):
         return weekdf
 
     def tseries(self, ts, day):
+        """
+        Uses time series to predict ammount of calls on a given length of days
+        :param ts: pandas df with daily call ammount
+        :param day: days to predict (predictor is optimized for 7 days)
+        :return: pddf with same amount of days as ts, pddf day long with predicted calls
+        """
         try:
-            res = pickle.load(open("tseries.p", "rb"))
+            res = pickle.load(open("publicRes/tseries.p", "rb"))
         except:
             mod = tsa.statespace.SARIMAX(ts, order=(7, 1, 0), seasonal_order=(1, 1, 1, 7))
             res = mod.fit(disp=False)
-            pickle.dump(res, open("tseries.p", "wb"))
+            pickle.dump(res, open("publicRes/tseries.p", "wb"))
 
 
         df1 = res.fittedvalues
@@ -216,7 +237,11 @@ class Models(CallCenter):
         return df1, df2
 
     def webPredictNextWeek(self, data):
-
+        """
+        Plots and saves the result from predictNextWeek()
+        :param data: pandas dataframe with dummydata
+        :return: none
+        """
         result = self.predictNextWeek(data)
         result = result.resample('1H').replace(np.nan, 0)
         result["Predicted w Timeseries"].plot()#.bar()#(kind="bar")

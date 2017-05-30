@@ -16,6 +16,12 @@ class Training():
         pass
 
     def fetchData(self):
+        '''
+        fetches data from mongoDB, collection: callCollection.
+        Creates a pandas Dataframe out of fetched data, and resamples it to one-hour sums.
+        Then adds a dummy array to the data.
+        :return: pandas Dataframe
+        '''
         dataframe = dataframes.CallCenter()
         data = dataframe.binnedType(dataframe.dBtoDf(), timeDelta="1H")
         data = dataframe.addDummy(data)
@@ -23,6 +29,15 @@ class Training():
 
 
     def readAndPrepareData(self, dataframe, trainingDays=365, testDays=14):
+        '''
+        takes a dataframe and trains on it for the given number of days. Then predicts via MLP and Linear Regression the incoming calls at testDays.
+        Writes everything to a resultDF that is used for plotting later on. The prediction of the MLP is already stored in a .pkl file. If existent,
+        the prediction gets loaded from there. If not, it trains and stores the trained model in the bkl file.
+        :param dataframe: pandas Dataframe
+        :param trainingDays: number of days the model should train on
+        :param testDays: number of days the model gets tested on
+        :return:
+        '''
         # reading data
         print('complete data size:', len(dataframe))
         timeData = dataframe.index
@@ -54,11 +69,11 @@ class Training():
 
         # training MLP
         try:
-            clf = joblib.load("mlp2.pkl")
+            clf = joblib.load("publicRes/mlp2.pkl")
         except:
             clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150, 123), random_state=1, early_stopping=False)
             clf.fit(dummyData_train, calls_train)
-            joblib.dump(clf, 'mlp2.pkl')
+            joblib.dump(clf, 'publicRes/mlp2.pkl')
 
 
         # predicting LinReg and MLP
@@ -83,9 +98,8 @@ class Training():
         print("MLP mean squared error: ", np.mean((resultDF['resultMLP'] - calls_test) ** 2))
         # Explained variance score: 1 is perfect prediction
         print('Variance score LinReg: %.2f' % regr.score(dummyData_test, calls_test))
-        #print('Variance score MLP: %.2f' % regr.score(calls_test, predictionMLP))
 
-
+        #calculates mean hit rate
         percentOfDeviation = []
         for index, item in enumerate(predictionMLP):
             if item > (0.75 * calls_test[index]) and item < (1.25 * calls_test[index]):
@@ -103,8 +117,6 @@ class Training():
 
 
     def plotMLPandLinReg(self, dataframe, days=None):
-
-
         plt.plot(dataframe['resultMLP'][:days], color='#00A113', label='prediction MLP', linewidth=1.6, alpha=0.9)
         plt.plot(dataframe['resultLinReg'][:days], color='#A600B5', label='prediction LinReg', linewidth=1.6, alpha=0.9)
         plt.plot(dataframe['actual calls'][:days], color='red', label='actual calls', alpha=0.8, linewidth=1.4, linestyle='dashed')

@@ -1,14 +1,20 @@
 # STK-INF-CC
 
-Since this dataset is not really to be made public (request from Telenor), you'll have to check your email address for a link to a google drive storage, where you'll find the .csv file with the provided data. 
+Fransis Kolstø      (Bachelor)
+Wei Liu             (Master)
+Felix Schweinfest   (Bachelor)
+Harjeet Harpal      (Master)
 
-1) This file has to be put into the /res folder. 
-2) start mongodb 
-3) run linRegDB.py to load the data from the .csv into the mongodb.
-4) now you can run linearRegression.py to run and plot the linear Regression and also the multi layer perceptron.
-5) run kmeans.py to plot everything related to kmeans clustering.
-6) In the google drive storage, you will also find our presentation file, the PITCHME.md, and a folder named 'plots'. With those files, the presentation file will have the pictures of plots included.
+The two jupyter notebooks used in the presentation are the (only) two in this repository: presentation29.05.17.ipynb and Timeseries.ipynb.
 
-A few other things/files are not done yet or experimental. Feel free to run stuff and look around.
+Running the files [csv file needed, not part of repository]: start mongoDB, since we store our read files there. After that, the flask web app is designed to read everything from the csv file (due to privacy restrictions not provided in the gitHub repository, will be given on request) and store it in the mongoDB.
 
-Disclaimer: we know that our code is far from clean and a lot of stuff is redundant. We're planning on doing a cleanup before the final delivery.
+1) start mongodb
+2) run webapp.py [disclaimer: the 'kmeans' function doesn't work as of now and will maybe break the web app]
+
+We put the linear regression prediction as well as the Multi Layer Perceptron prediction into linearRegression.py, but also use MLP training in predModels.py, since there the merging of MLP prediction and timeSeries prediction takes place.
+Findinga suitable time series parameters happens in timeseries.py; Tspredict.py then uses the found parameters to predict what  is then fed to the MLP.
+
+The .pkl files are trained MLP models. If they are deleted before run, the MLP model will re-train and re-create those files. Otherwise the prediction uses those pre-trained models. We used that for the sake of speed in the prediction and it only needs to be changed if parameters of training or the training data changes.
+
+Scraping youtube videos to get information about advertisement campaigns was dropped, since it didn't improve the predictions by a meaningful level.
