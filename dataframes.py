@@ -10,6 +10,11 @@ import numpy as np
 import json
 
 class CallCenter():
+    """
+    Class for data-wrangling and database functions.
+
+    init connects to the mongodb and checks if it has the data needed, if not creates and adds data to db.
+    """
     def __init__(self):
 
         self.client = MongoClient()
