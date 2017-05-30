@@ -1,11 +1,8 @@
 # STK-INF-CC
 
 - *Fransis Kolstø*       (Bachelor)
-
 - *Wei Liu*              (Master)
-
 - *Felix Schweinfest*    (Bachelor)
-
 - *Harjeet Harpal*       (Master)
 
 
