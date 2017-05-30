@@ -69,11 +69,11 @@ class Training():
 
         # training MLP
         try:
-            clf = joblib.load("mlp2.pkl")
+            clf = joblib.load("publicRes/mlp2.pkl")
         except:
             clf = MLPClassifier(solver="adam", hidden_layer_sizes=(150, 123), random_state=1, early_stopping=False)
             clf.fit(dummyData_train, calls_train)
-            joblib.dump(clf, 'mlp2.pkl')
+            joblib.dump(clf, 'publicRes/mlp2.pkl')
 
 
         # predicting LinReg and MLP
